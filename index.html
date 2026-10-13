@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Idea Hub · Hosting Services</title>
+<meta name="description" content="Demo app for raising, scoring (WSJF) and tracking improvement ideas, with a guided idea assistant.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230E5C8C'/%3E%3Cpath d='M16 7a7 7 0 0 0-4.2 12.6c.7.6 1.2 1.5 1.2 2.4h6c0-.9.5-1.8 1.2-2.4A7 7 0 0 0 16 7zM13 25h6' fill='none' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{--accent:#0E5C8C;--accent-dark:#0A4166;--ink:#17212B;--muted:#5B6672;--line:#DDE2E7;--line2:#E3E7EB;--bg:#F2F4F6;--soft:#F8FAFB}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif}
+a{color:var(--accent)}a:hover{color:var(--accent-dark)}
+button{font:inherit}
+input,select,textarea{font:inherit;color:var(--ink)}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.muted{color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wrap{max-width:1360px;margin:0 auto;padding:32px 24px 48px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px}
+.row{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.main-col{flex:999 1 620px;min-width:0}
+.side-col{flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:16px}
+h1.title{margin:0;font-size:28px;font-weight:700;letter-spacing:-.015em}
+.fld{width:100%;min-height:44px;padding:10px 12px;border:1px solid #C9CFD6;border-radius:8px;background:#fff;font-size:15px}
+.fld.bad{border-color:#B3261E;background:#FFF8F7}
+textarea.fld{resize:vertical;line-height:1.5}
+.lbl{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+.req{color:#B3261E}
+.hint{font-size:13px;color:var(--muted);margin-top:6px}
+.err{font-size:13px;color:#B3261E;margin-top:6px;font-weight:500}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.grid-auto{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+
+/* header */
+.top{background:var(--ink);color:#fff}
+.top-in{max-width:1360px;margin:0 auto;padding:14px 24px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:40px;height:40px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;background:#0F171F;padding:4px;border-radius:10px}
+.tab{min-height:44px;padding:0 16px;border:0;border-radius:8px;background:transparent;color:#C9D6E2;font-size:15px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.tab:hover{color:#fff;background:#22303D}
+.tab.on{background:#fff;color:var(--ink)}
+.demo-band{background:#FFF4DE;color:#5C3B00;font-size:13px}
+.demo-band .in{max-width:1360px;margin:0 auto;padding:8px 24px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+.linkbtn{all:unset;cursor:pointer;text-decoration:underline;font-weight:600}
+.linkbtn:focus-visible{outline:2px solid var(--accent)}
+
+/* buttons, chips, pills */
+.btn{min-height:44px;padding:0 20px;border-radius:8px;border:1px solid transparent;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-dark)}
+.btn.ghost{background:#fff;color:var(--ink);border-color:#C9CFD6}
+.btn.ghost:hover{border-color:#8A96A3}
+.btn.sm{min-height:38px;font-size:14px;padding:0 14px}
+.chip{min-height:40px;padding:0 14px;border:1px solid #C9CFD6;border-radius:999px;background:#fff;color:#2E3A46;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.chip:hover{border-color:#8A96A3}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip .n{font-family:'IBM Plex Mono',monospace;font-size:12px;opacity:.8}
+.chip.qr{border-color:#9DB7CC;color:var(--accent-dark);background:#F3F8FC}
+.chip.qr:hover{border-color:var(--accent);background:#E6F0F8}
+.pill{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:13px;font-weight:500;white-space:nowrap}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.s-new{background:#E4ECF7;color:#1E3A5F}.s-assessment{background:#FFEFD6;color:#7A4600}.s-progress{background:#D9EFEC;color:#0B524D}.s-closed{background:#E9EBEE;color:#3F4650}
+.d-pending{background:#E9EBEE;color:#3F4650}.d-approved{background:#DDF0E2;color:#1C5A2C}.d-hold{background:#FFEFD6;color:#7A4600}.d-rejected{background:#FAE1DD;color:#8E2A1E}
+.p-critical{background:#8E2A1E;color:#fff}.p-high{background:#FFE2BF;color:#6E3B00}.p-medium{background:#E4ECF7;color:#1E3A5F}.p-low{background:#E9EBEE;color:#3F4650}.p-none{background:transparent;color:var(--muted);border:1px dashed #B5BDC6}
+.sc-hi{background:#1C7A4A}.sc-mid{background:#C47F14}.sc-lo{background:#B3261E}
+.num{width:28px;height:28px;padding:0;justify-content:center;flex:none;font-family:'IBM Plex Mono',monospace}
+
+/* dashboard */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px}
+.kpi{padding:18px 20px;display:flex;flex-direction:column;gap:6px}
+.kpi .v{font-size:34px;font-weight:600;font-family:'IBM Plex Mono',monospace;letter-spacing:-.02em;line-height:1.1}
+.toolbar{padding:18px 20px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line2)}
+.tbl{min-width:1180px}
+.tr{display:grid;grid-template-columns:96px minmax(260px,2.4fr) 170px 130px 110px 170px 140px 130px;gap:16px;padding:16px 20px;align-items:center;font-size:14px}
+.tr.head{padding:12px 20px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
+.tr.body{border-top:1px solid var(--line2)}
+.tr.body:hover{background:var(--soft)}
+.rowbtn{all:unset;cursor:pointer;font-weight:600;font-size:15px;line-height:1.35}
+.rowbtn:hover{color:var(--accent);text-decoration:underline}
+.rowbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ellipsis{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.avatar{width:28px;height:28px;flex:none;border-radius:50%;color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.bar{flex:1;height:6px;border-radius:3px;background:var(--line2);overflow:hidden;max-width:72px}
+.bar span{display:block;height:100%}
+
+/* drawer */
+.backdrop{position:fixed;inset:0;background:rgba(15,23,31,.45);border:0;padding:0;cursor:pointer}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:100%;max-width:560px;background:#fff;overflow-y:auto;box-shadow:-12px 0 40px rgba(15,23,31,.18);display:flex;flex-direction:column;z-index:10}
+.iconbtn{flex:none;width:44px;height:44px;border-radius:8px;border:1px solid #C9CFD6;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:520px){.g3,.g2{grid-template-columns:1fr}}
+
+/* chat */
+.chat{height:min(740px,calc(100vh - 160px));min-height:520px;display:flex;flex-direction:column;overflow:hidden}
+.chat-head{padding:16px 22px;border-bottom:1px solid var(--line2);display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.log{flex:1;min-height:0;overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:14px;background:var(--soft)}
+.bot-av{width:30px;height:30px;flex:none;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.bub-bot{background:#fff;border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:12px 14px;font-size:15px;line-height:1.55;white-space:pre-line;overflow-wrap:anywhere}
+.bub-user{background:var(--accent);color:#fff;border-radius:14px 4px 14px 14px;padding:10px 14px;font-size:15px;line-height:1.5;max-width:75%;white-space:pre-wrap;overflow-wrap:anywhere}
+.status-card{margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;max-width:480px}
+.tdot{width:7px;height:7px;border-radius:50%;background:#8A96A3;animation:tblink 1.2s infinite ease-in-out}
+.tdot:nth-child(3){animation-delay:.2s}.tdot:nth-child(4){animation-delay:.4s}
+@keyframes tblink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.ex{all:unset;box-sizing:border-box;display:block;width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:14px;line-height:1.4;cursor:pointer;background:#fff}
+.ex:hover{border-color:#8A96A3;background:var(--soft)}
+.ex:focus-visible{outline:2px solid var(--accent)}
+footer{max-width:1360px;margin:0 auto;padding:0 24px 32px;font-size:13px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.tdot{animation:none}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<noscript>This demo needs JavaScript enabled.</noscript>
+
+<script type="module">
+import { html, render, Component } from 'https://unpkg.com/htm@3.1.1/preact/standalone.module.js';
+
+/* ------------------------------------------------------------------ */
+/* Reference data                                                      */
+/* ------------------------------------------------------------------ */
+const CATS = ['Compute & VMs', 'Storage & Backup', 'Network & DNS', 'Monitoring & Alerting', 'Automation & Self-service', 'Security & Compliance', 'Cost optimisation', 'Other'];
+const STAGE = { new: 'New', assessment: 'In assessment', progress: 'In progress', closed: 'Closed' };
+const DEC = { pending: 'Pending', approved: 'Approved', hold: 'On hold', rejected: 'Rejected' };
+const PRIO = { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' };
+const URG = { low: 'Low', medium: 'Medium', high: 'High' };
+const ASSIGNEES = ['Anna Nowak', 'Piotr Wiśniewski', 'Katarzyna Zielińska', 'Tomasz Lewandowski', 'Marta Kamińska'];
+const FIB = [1, 2, 3, 5, 8, 13, 20];
+const AV = ['#0E5C8C', '#0B6B5F', '#5B3FA0', '#8A4B12', '#3F4650', '#7A2E5C'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const FIRST_NUM = 1049;
+
+const fmt = (d) => { const p = d.split('-'); return Number(p[2]) + ' ' + MONTHS[Number(p[1]) - 1] + ' ' + p[0]; };
+const initials = (n) => n ? n.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase() : '—';
+const avBg = (n) => { if (!n) return '#B5BDC6'; let h = 0; for (let k = 0; k < n.length; k++) h = (h + n.charCodeAt(k)) % AV.length; return AV[h]; };
+const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
+const today = () => new Date().toISOString().slice(0, 10);
+
+/* WSJF = (User/business value + Time criticality + Risk reduction/opportunity enablement) / Job size */
+const cod = (i) => (i.bv && i.tc && i.rr) ? i.bv + i.tc + i.rr : null;
+const wsjf = (i) => { const c = cod(i); return (c === null || !i.js) ? null : Math.round(c / i.js * 10) / 10; };
+
+const emptyForm = () => ({ title: '', category: '', urgency: 'medium', description: '', benefit: '', affected: '', name: '', email: '', team: '' });
+
+const seed = () => [
+  { id: 'HS-1048', title: 'Bare-metal hosting option for GPU workloads', category: 'Compute & VMs', urgency: 'medium', description: 'Offer dedicated bare-metal hosts with GPUs for teams running model training, instead of them buying their own hardware.', benefit: 'Keeps GPU workloads inside managed hosting with standard patching and monitoring.', affected: 'Data science teams', name: 'Jakub Mazur', email: 'jakub.mazur@example.com', team: 'Analytics', date: '2026-10-09', bv: 5, tc: 2, rr: 3, js: 20, notes: 'Capacity and power constraints in current DC. Revisit with the cloud GPU offering.', priority: 'low', assignee: 'Tomasz Lewandowski', stage: 'closed', decision: 'rejected' },
+  { id: 'HS-1047', title: 'Storage tiering for cold backup data', category: 'Storage & Backup', urgency: 'medium', description: 'Automatically move backups older than 90 days to a cheaper archive tier while keeping restore SLAs for recent data.', benefit: 'Lower storage cost for long-retention backups.', affected: 'All backup policies', name: 'Ewa Krawczyk', email: 'ewa.krawczyk@example.com', team: 'Finance IT', date: '2026-10-08', bv: null, tc: null, rr: null, js: null, notes: '', priority: '', assignee: '', stage: 'new', decision: 'pending' },
+  { id: 'HS-1046', title: 'Rightsizing report for idle and oversized VMs', category: 'Cost optimisation', urgency: 'medium', description: 'Monthly report to app owners listing VMs with sustained low CPU and memory use, with a suggested smaller size.', benefit: 'Reduce wasted compute; make costs visible to owners.', affected: 'App owners, FinOps', name: 'Michał Dąbrowski', email: 'michal.dabrowski@example.com', team: 'FinOps', date: '2026-10-06', bv: 8, tc: 3, rr: 5, js: 3, notes: 'Depends on monitoring data retention of 30+ days.', priority: 'medium', assignee: 'Marta Kamińska', stage: 'assessment', decision: 'hold' },
+  { id: 'HS-1045', title: 'Automated patching windows for Windows Server fleet', category: 'Automation & Self-service', urgency: 'high', description: 'Let app owners pick a recurring maintenance window per server group; patching, reboot and health checks run automatically within it.', benefit: 'Fewer manual change requests and missed patch cycles.', affected: 'Windows Server VMs, all regions', name: 'Agnieszka Wójcik', email: 'agnieszka.wojcik@example.com', team: 'Infrastructure Ops', date: '2026-10-02', bv: 13, tc: 8, rr: 13, js: 8, notes: '', priority: 'high', assignee: 'Piotr Wiśniewski', stage: 'assessment', decision: 'pending' },
+  { id: 'HS-1044', title: 'Unified monitoring dashboards for hosted applications', category: 'Monitoring & Alerting', urgency: 'medium', description: 'One standard dashboard per hosted application showing availability, CPU, memory, disk and recent alerts.', benefit: 'Faster triage; app owners self-serve status instead of raising tickets.', affected: 'App owners, Service Desk', name: 'Paweł Szymański', email: 'pawel.szymanski@example.com', team: 'Service Desk', date: '2026-09-24', bv: 8, tc: 5, rr: 8, js: 5, notes: 'Approved at CAB. Template built on existing monitoring stack.', priority: 'medium', assignee: 'Katarzyna Zielińska', stage: 'progress', decision: 'approved' },
+  { id: 'HS-1043', title: 'Self-service VM provisioning from the service catalogue', category: 'Automation & Self-service', urgency: 'high', description: 'Standard VM sizes orderable from the service catalogue, built automatically with baseline hardening, backup and monitoring.', benefit: 'Provisioning time from days to under an hour.', affected: 'All requesting teams', name: 'Anna Nowak', email: 'anna.nowak@example.com', team: 'Hosting Services', date: '2026-09-15', bv: 20, tc: 13, rr: 8, js: 13, notes: 'Phase 1: Windows and Linux standard sizes only.', priority: 'critical', assignee: 'Anna Nowak', stage: 'progress', decision: 'approved' },
+  { id: 'HS-1042', title: 'Self-service DNS record requests', category: 'Network & DNS', urgency: 'low', description: 'Form-driven A/CNAME record creation for internal zones with automatic validation and approval by zone owner.', benefit: 'Removes a frequent manual ticket type.', affected: 'Internal DNS zones', name: 'Tomasz Lewandowski', email: 'tomasz.lewandowski@example.com', team: 'Network', date: '2026-09-03', bv: 5, tc: 2, rr: 2, js: 2, notes: 'Delivered 2026-10-01.', priority: 'low', assignee: 'Tomasz Lewandowski', stage: 'closed', decision: 'approved' }
+];
+
+/* ------------------------------------------------------------------ */
+/* Storage — swap this for Supabase later; the rest of the app stays.  */
+/* ------------------------------------------------------------------ */
+const LS_KEY = 'ideahub.demo.v1';
+const store = {
+  load() {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return null;
+      const d = JSON.parse(raw);
+      return Array.isArray(d.ideas) && typeof d.nextNum === 'number' ? d : null;
+    } catch (e) { return null; }
+  },
+  save(d) { try { localStorage.setItem(LS_KEY, JSON.stringify(d)); } catch (e) { /* storage unavailable: keep working in memory */ } },
+  clear() { try { localStorage.removeItem(LS_KEY); } catch (e) { /* ignore */ } }
+};
+
+const greeting = () => ({ id: 1, from: 'bot', text: 'Hi! I\'m the Hosting Services idea assistant.\n\nI can help you raise a new idea, or check the status of an idea you\'ve already submitted. What would you like to do?', cardId: null });
+
+/* Small inline icons (stroke, currentColor) */
+const Icon = {
+  chat: html`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg>`,
+  plus: html`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
+  close: html`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
+  send: html`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l16-8-6 16-3-7z"/></svg>`,
+  search: html`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B6672" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="position:absolute;left:12px;top:14px"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>`,
+  check: html`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>`,
+  server: html`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg>`,
+  bulb: html`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1.1 1.3 1.1 2.2h5c0-.9.5-1.7 1.1-2.2A6 6 0 0 0 12 3z"/></svg>`
+};
+
+/* ------------------------------------------------------------------ */
+/* App                                                                 */
+/* ------------------------------------------------------------------ */
+class App extends Component {
+  constructor() {
+    super();
+    const saved = store.load();
+    this.state = {
+      view: 'assistant',
+      form: emptyForm(), errors: {}, lastId: null,
+      stage: 'all', q: '', decFilter: 'all', prioFilter: 'all', sort: 'newest', selId: null,
+      ideas: saved ? saved.ideas : seed(),
+      nextNum: saved ? saved.nextNum : FIRST_NUM,
+      chat: [greeting()], chatInput: '', typing: false, flow: null, chatChips: null, lastEmail: ''
+    };
+    this.mid = 100;
+    this.logRef = (el) => { this.logEl = el; };
+    this.onKey = (e) => { if (e.key === 'Escape' && this.state.selId) this.setState({ selId: null }); };
+  }
+
+  componentDidMount() { document.addEventListener('keydown', this.onKey); }
+  componentWillUnmount() { document.removeEventListener('keydown', this.onKey); clearTimeout(this.chatTimer); }
+
+  componentDidUpdate(_, prev) {
+    const s = this.state;
+    if (prev.ideas !== s.ideas || prev.nextNum !== s.nextNum) store.save({ ideas: s.ideas, nextNum: s.nextNum });
+    const n = s.chat.length + (s.typing ? 1 : 0);
+    if (this.logEl && (n !== this.lastN || this.logEl !== this.lastEl)) {
+      this.lastN = n; this.lastEl = this.logEl;
+      this.logEl.scrollTop = this.logEl.scrollHeight;
+    }
+    if (prev.selId !== s.selId && s.selId && this.drawerEl) this.drawerEl.focus();
+  }
+
+  /* ---------- data helpers ---------- */
+  addIdea(d) {
+    const id = 'HS-' + this.state.nextNum;
+    const idea = {
+      id, title: d.title, category: d.category, urgency: d.urgency || 'medium', description: d.description,
+      benefit: d.benefit || '', affected: d.affected || '', name: d.name, email: d.email, team: d.team || '',
+      date: today(), bv: null, tc: null, rr: null, js: null, notes: '', priority: '', assignee: '', stage: 'new', decision: 'pending'
+    };
+    return { id, upd: { ideas: [idea].concat(this.state.ideas), nextNum: this.state.nextNum + 1 } };
+  }
+
+  patchSel(key, raw) {
+    const numeric = ['bv', 'tc', 'rr', 'js'].indexOf(key) !== -1;
+    const v = numeric ? (raw === '' ? null : Number(raw)) : raw;
+    this.setState({ ideas: this.state.ideas.map((i) => i.id === this.state.selId ? Object.assign({}, i, { [key]: v }) : i) });
+  }
+
+  resetDemo() {
+    if (!window.confirm('Reset the demo? This removes ideas you added and restores the sample data.')) return;
+    store.clear();
+    clearTimeout(this.chatTimer);
+    this.setState({ ideas: seed(), nextNum: FIRST_NUM, selId: null, lastId: null, chat: [greeting()], flow: null, chatChips: null, typing: false, lastEmail: '' });
+  }
+
+  /* ---------- form ---------- */
+  setForm(k) {
+    return (e) => this.setState({ form: Object.assign({}, this.state.form, { [k]: e.target.value }), errors: Object.assign({}, this.state.errors, { [k]: false }) });
+  }
+
+  submit(e) {
+    e.preventDefault();
+    const f = this.state.form;
+    const errors = {
+      title: !f.title.trim(), category: !f.category, description: f.description.trim().length < 15,
+      name: !f.name.trim(), email: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())
+    };
+    if (Object.values(errors).some(Boolean)) { this.setState({ errors, lastId: null }); return; }
+    const t = (x) => x.trim();
+    const r = this.addIdea({ title: t(f.title), category: f.category, urgency: f.urgency, description: t(f.description), benefit: t(f.benefit), affected: t(f.affected), name: t(f.name), email: t(f.email), team: t(f.team) });
+    this.setState(Object.assign(r.upd, { form: emptyForm(), errors: {}, lastId: r.id }));
+  }
+
+  /* ---------- assistant ---------- */
+  handleChat(text) {
+    const t = String(text || '').trim();
+    if (!t || this.state.typing) return;
+    this.mid += 1;
+    this.setState({ chat: this.state.chat.concat([{ id: this.mid, from: 'user', text: t, cardId: null }]), chatInput: '', typing: true });
+    clearTimeout(this.chatTimer);
+    this.chatTimer = setTimeout(() => this.respond(t), 550);
+  }
+
+  respond(t) {
+    const s = this.state;
+    const low = t.toLowerCase();
+    const out = [];
+    let upd = {};
+    let chips = null;
+    let flow = s.flow;
+    const say = (text, cardId) => { this.mid += 1; out.push({ id: this.mid, from: 'bot', text, cardId: cardId || null }); };
+    const idMatch = t.match(/hs[-\s]?(\d{3,5})/i);
+    const emailMatch = t.match(/[^\s@]+@[^\s@]+\.[^\s@]+/);
+
+    const startRaise = (title) => {
+      if (title) {
+        flow = { mode: 'raise', step: 'category', draft: { title, urgency: 'medium' } };
+        say('Great idea — I\'ll use “' + title + '” as the working title.\n\nWhich service area does it relate to?');
+      } else {
+        flow = { mode: 'raise', step: 'title', draft: { urgency: 'medium' } };
+        say('Great, let\'s capture your idea. I\'ll ask a few short questions — type “cancel” at any time.\n\nFirst, what\'s a short title for your idea?');
+      }
+    };
+
+    const findStatus = () => {
+      if (idMatch) {
+        const id = 'HS-' + idMatch[1];
+        if (s.ideas.find((x) => x.id === id)) say('Here\'s the latest on ' + id + ':', id);
+        else say('I couldn\'t find an idea with ID ' + id + '. Check the number, or give me the email address you submitted it with.');
+        return true;
+      }
+      const email = emailMatch ? emailMatch[0].toLowerCase() : (/\bmy ideas?\b/.test(low) && s.lastEmail ? s.lastEmail : null);
+      if (email) {
+        const mine = s.ideas.filter((x) => x.email.toLowerCase() === email);
+        upd.lastEmail = email;
+        if (!mine.length) { say('I didn\'t find any ideas submitted with ' + email + '. Is that the address you used?'); return true; }
+        if (mine.length === 1) { say('I found one idea submitted by ' + email + ':', mine[0].id); return true; }
+        say('I found ' + mine.length + ' ideas submitted by ' + email + ':\n\n' + mine.map((x) => '• ' + x.id + ' — ' + x.title + '\n   ' + STAGE[x.stage] + ' · decision ' + DEC[x.decision]).join('\n') + '\n\nPick one below for full details.');
+        chips = mine.map((x) => x.id);
+        return true;
+      }
+      return false;
+    };
+
+    if (/^(cancel|stop|back to menu|menu)$/.test(low)) {
+      say(flow ? 'No problem, I\'ve cancelled that. What would you like to do next?' : 'What would you like to do?');
+      flow = null;
+    } else if (flow && flow.mode === 'raise') {
+      const d = Object.assign({}, flow.draft);
+      const step = flow.step;
+      const go = (next) => { flow = { mode: 'raise', step: next, draft: d }; };
+      if (low === 'start over') {
+        startRaise(null);
+      } else if (step === 'title') {
+        if (t.length < 4) say('Could you give it a slightly longer title? A few words is perfect.');
+        else { d.title = cap(t); go('category'); say('Thanks. Which service area does it relate to?'); }
+      } else if (step === 'category') {
+        const c = CATS.find((x) => x.toLowerCase() === low) || CATS.find((x) => low.length >= 3 && x.toLowerCase().indexOf(low) !== -1) || CATS.find((x) => low.indexOf(x.toLowerCase().split(' ')[0]) !== -1);
+        d.category = c || 'Other';
+        go('description');
+        say((c ? '' : 'I\'ll file that under “Other” — the team can recategorise it.\n\n') + 'Now describe the idea: what would you change, and how would it work?');
+      } else if (step === 'description') {
+        if (t.length < 15) say('Could you add a bit more detail? A sentence or two about what would change helps the team score it.');
+        else { d.description = t; go('benefit'); say('What benefit do you expect — time saved, cost reduced, risk lowered, a better experience? You can also skip this.'); }
+      } else if (step === 'benefit') {
+        d.benefit = low === 'skip' ? '' : t; go('urgency'); say('How urgent is it from your side?');
+      } else if (step === 'urgency') {
+        d.urgency = /high|urgent/.test(low) ? 'high' : /low|nice/.test(low) ? 'low' : 'medium';
+        go('name'); say('Almost done. What\'s your name?');
+      } else if (step === 'name') {
+        if (t.length < 2) say('Please tell me your name.');
+        else { d.name = t; go('email'); say('And your work email, so the team can keep you posted?'); }
+      } else if (step === 'email') {
+        if (!emailMatch) say('That doesn\'t look like an email address — could you check it?');
+        else {
+          d.email = emailMatch[0]; go('confirm');
+          say('Here\'s your idea:\n\n• Title: ' + d.title + '\n• Service area: ' + d.category + '\n• Description: ' + d.description + '\n• Expected benefit: ' + (d.benefit || '—') + '\n• Urgency: ' + URG[d.urgency] + '\n• Submitted by: ' + d.name + ' (' + d.email + ')\n\nShall I submit it?');
+        }
+      } else if (step === 'confirm') {
+        if (/submit|yes|confirm|^ok|send/.test(low)) {
+          const r = this.addIdea(d);
+          upd = Object.assign(upd, r.upd, { lastEmail: d.email.toLowerCase() });
+          flow = null;
+          say('Done! Your idea is raised as ' + r.id + '. It starts as New with decision Pending — the Hosting Services team will score it with WSJF and assign an owner.\n\nAsk me about ' + r.id + ' any time to see where it stands.', r.id);
+        } else {
+          say('Reply “Submit idea” to send it, “Start over” to begin again, or “Cancel”.');
+        }
+      }
+    } else if (flow && flow.mode === 'status') {
+      if (findStatus()) flow = null;
+      else say('I need an idea ID like HS-1043, or the email address you used when submitting. Type “cancel” to go back.');
+    } else if (/wsjf|score|prioriti/.test(low)) {
+      say('WSJF (Weighted Shortest Job First) ranks ideas by Cost of Delay ÷ Job Size.\n\nCost of Delay = User/business value + Time criticality + Risk reduction/opportunity enablement, each scored relative to other ideas on a 1–20 Fibonacci scale. Job Size is the relative effort to deliver.\n\nA valuable, urgent, small job gets the highest score and is picked up first.');
+    } else if (idMatch || emailMatch || /status|check|track|progress|where|my ideas?\b/.test(low)) {
+      if (!findStatus()) { flow = { mode: 'status' }; say('Sure — give me the idea ID (for example HS-1043) or the email address you submitted it with.'); }
+    } else if (/idea|raise|submit|new|propose|suggest/.test(low)) {
+      const m = t.match(/idea\s+(?:to|for|about)\s+(.{4,})/i);
+      startRaise(m ? cap(m[1].replace(/[.!?]+$/, '').trim()) : null);
+    } else if (/^(hi|hello|hey|good (morning|afternoon))\b/.test(low)) {
+      say('Hi! I can help you raise a new idea or check the status of one you\'ve submitted. Which would you like?');
+    } else {
+      say('Sorry, I didn\'t catch that. I can help with two things: raising a new idea for Hosting Services, or checking the status of an idea you\'ve already submitted.');
+    }
+
+    this.setState(Object.assign({ chat: this.state.chat.concat(out), flow, typing: false, chatChips: chips }, upd));
+  }
+
+  resetChat() {
+    clearTimeout(this.chatTimer);
+    this.setState({ chat: [greeting()], flow: null, chatChips: null, typing: false, chatInput: '' });
+  }
+
+  openIdea(id) { this.setState({ view: 'dashboard', stage: 'all', q: '', decFilter: 'all', prioFilter: 'all', selId: id }); }
+
+  /* ---------- views ---------- */
+  renderHeader(view) {
+    const tab = (key, label, extra) => html`
+      <button type="button" class=${'tab' + (view === key ? ' on' : '')} aria-pressed=${view === key ? 'true' : 'false'} onClick=${() => this.setState({ view: key, selId: null })}>${extra}${label}</button>`;
+    return html`
+      <header class="top">
+        <div class="top-in">
+          <div class="brand">
+            <div class="logo">${Icon.server}</div>
+            <div>
+              <div style="font-size:18px;font-weight:700;letter-spacing:-.01em">Hosting Services Idea Hub</div>
+              <div style="font-size:13px;color:#A9B6C3">Submit, assess and track improvement ideas</div>
+            </div>
+          </div>
+          <nav class="tabs" aria-label="Sections">
+            ${tab('assistant', 'Idea assistant', Icon.chat)}
+            ${tab('submit', 'Submit an idea')}
+            ${tab('dashboard', html`Idea dashboard <span class="mono" style="font-size:13px;opacity:.75">${this.state.ideas.length}</span>`)}
+          </nav>
+        </div>
+      </header>
+      <div class="demo-band"><div class="in">
+        <span><strong>Demo</strong> · fictional data, saved only in your browser.</span>
+        <button type="button" class="linkbtn" onClick=${() => this.resetDemo()}>Reset demo data</button>
+      </div></div>`;
+  }
+
+  renderStatusCard(id) {
+    const i = this.state.ideas.find((x) => x.id === id);
+    if (!i) return null;
+    const sc = wsjf(i);
+    const cell = (label, content) => html`<div><div class="eyebrow" style="margin-bottom:4px">${label}</div>${content}</div>`;
+    return html`
+      <div class="status-card">
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+          <span class="mono" style="font-size:13px;color:#3F4650">${i.id}</span>
+          <span class=${'pill s-' + i.stage}><span class="dot"></span>${STAGE[i.stage]}</span>
+          <span class=${'pill d-' + i.decision}>${DEC[i.decision]}</span>
+        </div>
+        <div style="font-weight:600;font-size:16px;line-height:1.35;margin-top:10px">${i.title}</div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;margin-top:14px;font-size:14px">
+          ${cell('Priority', html`<span class=${'pill ' + (i.priority ? 'p-' + i.priority : 'p-none')}>${PRIO[i.priority] || 'Not set'}</span>`)}
+          ${cell('WSJF', html`<span class="mono" style="font-weight:600">${sc === null ? 'Not scored yet' : sc.toFixed(1)}</span>`)}
+          ${cell('Assigned to', i.assignee || 'Not assigned yet')}
+          ${cell('Submitted', fmt(i.date))}
+        </div>
+        ${i.notes && html`<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line2);font-size:14px;line-height:1.5"><span class="muted">Team note: </span>${i.notes}</div>`}
+        <button type="button" class="btn ghost sm" style="margin-top:14px" onClick=${() => this.openIdea(i.id)}>Open in dashboard</button>
+      </div>`;
+  }
+
+  renderAssistant() {
+    const s = this.state;
+    const fl = s.flow;
+    let qr;
+    if (s.chatChips) qr = s.chatChips.concat(['Check another idea']);
+    else if (!fl) qr = ['Raise a new idea', 'Check idea status'].concat(s.lastEmail ? ['My ideas'] : []).concat(['How does WSJF work?']);
+    else if (fl.mode === 'status') qr = ['Cancel'];
+    else if (fl.step === 'category') qr = CATS.concat(['Cancel']);
+    else if (fl.step === 'benefit') qr = ['Skip', 'Cancel'];
+    else if (fl.step === 'urgency') qr = ['Low', 'Medium', 'High'];
+    else if (fl.step === 'confirm') qr = ['Submit idea', 'Start over', 'Cancel'];
+    else qr = ['Cancel'];
+    const PH = { title: 'Type a short title…', category: 'Pick a service area or type one…', description: 'Describe your idea…', benefit: 'Describe the benefit, or type “skip”…', urgency: 'Low, medium or high…', name: 'Your name…', email: 'name@company.com', confirm: 'Type “submit” to send…' };
+    const placeholder = !fl ? 'Ask about an idea, e.g. “status of HS-1045”' : fl.mode === 'status' ? 'Idea ID or email address…' : PH[fl.step];
+    const examples = ['I have an idea to automate SSL certificate renewals', 'What is the status of HS-1045?', 'Show ideas for anna.nowak@example.com', 'How does WSJF work?'];
+
+    return html`
+      <main class="wrap row">
+        <section class="card main-col chat" aria-label="Idea assistant chat">
+          <div class="chat-head">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div class="logo" style="border-radius:50%;width:42px;height:42px">${Icon.bulb}</div>
+              <div>
+                <h1 style="margin:0;font-size:18px;font-weight:700">Idea assistant</h1>
+                <div class="muted" style="font-size:13px">Raise a new idea or check the status of yours</div>
+              </div>
+            </div>
+            <button type="button" class="btn ghost sm" onClick=${() => this.resetChat()}>New conversation</button>
+          </div>
+
+          <div class="log" ref=${this.logRef} role="log" aria-live="polite" aria-label="Conversation">
+            ${s.chat.map((m) => m.from === 'bot' ? html`
+              <div key=${m.id} style="display:flex;gap:10px;align-items:flex-start;max-width:640px">
+                <div class="bot-av" aria-hidden="true">HS</div>
+                <div style="min-width:0;flex:1">
+                  <div class="bub-bot">${m.text}</div>
+                  ${m.cardId && this.renderStatusCard(m.cardId)}
+                </div>
+              </div>` : html`
+              <div key=${m.id} style="display:flex;justify-content:flex-end"><div class="bub-user">${m.text}</div></div>`)}
+            ${s.typing && html`
+              <div style="display:flex;gap:10px;align-items:center">
+                <div class="bot-av" aria-hidden="true">HS</div>
+                <div class="bub-bot" style="display:flex;gap:5px;align-items:center;padding:14px 16px"><span class="sr">Assistant is typing</span><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span></div>
+              </div>`}
+          </div>
+
+          <div style="border-top:1px solid var(--line2);padding:12px 22px 0;display:flex;flex-wrap:wrap;gap:8px">
+            ${qr.map((l) => html`<button type="button" key=${l} class="chip qr" onClick=${() => this.handleChat(l)}>${l}</button>`)}
+          </div>
+          <form style="padding:12px 22px 18px;display:flex;gap:10px" onSubmit=${(e) => { e.preventDefault(); this.handleChat(this.state.chatInput); }}>
+            <label for="chat-in" class="sr">Message to the idea assistant</label>
+            <input id="chat-in" class="fld" type="text" autocomplete="off" placeholder=${placeholder} value=${s.chatInput} onInput=${(e) => this.setState({ chatInput: e.target.value })} style="flex:1;min-width:0">
+            <button type="submit" class="btn primary">${Icon.send}Send</button>
+          </form>
+        </section>
+
+        <aside class="side-col">
+          <div class="card" style="padding:22px">
+            <h2 style="margin:0 0 14px;font-size:17px;font-weight:700">Try asking</h2>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              ${examples.map((l) => html`<button type="button" key=${l} class="ex" onClick=${() => this.handleChat(l)}>${l}</button>`)}
+            </div>
+          </div>
+          <div class="card" style="padding:22px">
+            <h2 style="margin:0 0 12px;font-size:17px;font-weight:700">How it works</h2>
+            <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.5;color:#2E3A46">
+              <li>Raising an idea asks the same questions as the form, one at a time. Type “cancel” at any point.</li>
+              <li>Ideas raised here appear on the dashboard straight away as New / Pending.</li>
+              <li>Check status by idea ID (e.g. HS-1045) or by the email you submitted with.</li>
+            </ul>
+          </div>
+        </aside>
+      </main>`;
+  }
+
+  renderSubmit() {
+    const s = this.state;
+    const f = s.form;
+    const err = s.errors;
+    const bad = (k) => 'fld' + (err[k] ? ' bad' : '');
+    const step = (n, cls, title, text) => html`
+      <li style="display:flex;gap:14px">
+        <span class=${'pill num ' + cls}>${n}</span>
+        <div><div style="font-weight:600;font-size:15px">${title}</div><div class="muted" style="font-size:14px;line-height:1.45;margin-top:2px">${text}</div></div>
+      </li>`;
+    return html`
+      <main class="wrap row">
+        <section class="card main-col" style="padding:32px">
+          <h1 class="title" style="margin-bottom:6px">Submit a new idea</h1>
+          <p class="muted" style="margin:0 0 28px;font-size:15px;line-height:1.5">Propose an improvement to Hosting Services. Fields marked <span class="req">*</span> are required. The Hosting Services team reviews new ideas and sets priority, owner and decision.</p>
+
+          ${s.lastId && html`
+            <div role="status" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;margin-bottom:24px;border-radius:10px;background:#DDF0E2;color:#1C5A2C">
+              <div style="display:flex;align-items:center;gap:10px;font-size:15px;font-weight:500">${Icon.check}<span>Idea <strong class="mono">${s.lastId}</strong> submitted and queued for assessment.</span></div>
+              <button type="button" class="btn ghost sm" onClick=${() => this.openIdea(s.lastId)}>View in dashboard</button>
+            </div>`}
+
+          <form noValidate onSubmit=${(e) => this.submit(e)} style="display:flex;flex-direction:column;gap:22px">
+            <div>
+              <label class="lbl" for="f-title">Idea title <span class="req">*</span></label>
+              <input id="f-title" class=${bad('title')} type="text" maxlength="120" placeholder="e.g. Self-service VM snapshots before patching" value=${f.title} onInput=${this.setForm('title')}>
+              ${err.title && html`<div class="err">Give your idea a short title.</div>`}
+            </div>
+            <div class="grid-auto">
+              <div>
+                <label class="lbl" for="f-cat">Service area <span class="req">*</span></label>
+                <select id="f-cat" class=${bad('category')} value=${f.category} onChange=${this.setForm('category')}>
+                  <option value="">Select a service area…</option>
+                  ${CATS.map((c) => html`<option value=${c}>${c}</option>`)}
+                </select>
+                ${err.category && html`<div class="err">Choose a service area.</div>`}
+              </div>
+              <div>
+                <label class="lbl" for="f-urg">Suggested urgency</label>
+                <select id="f-urg" class="fld" value=${f.urgency} onChange=${this.setForm('urgency')}>
+                  <option value="low">Low — nice to have</option>
+                  <option value="medium">Medium — noticeable benefit</option>
+                  <option value="high">High — blocks or costs us today</option>
+                </select>
+                <div class="hint">Final priority is set during assessment.</div>
+              </div>
+            </div>
+            <div>
+              <label class="lbl" for="f-desc">Idea description <span class="req">*</span></label>
+              <textarea id="f-desc" class=${bad('description')} rows="5" placeholder="What would you change, and how would it work?" value=${f.description} onInput=${this.setForm('description')}></textarea>
+              ${err.description && html`<div class="err">Describe the idea in at least a sentence or two.</div>`}
+            </div>
+            <div>
+              <label class="lbl" for="f-ben">Expected benefit</label>
+              <textarea id="f-ben" class="fld" rows="3" placeholder="Time saved, cost reduced, risk lowered, better user experience…" value=${f.benefit} onInput=${this.setForm('benefit')}></textarea>
+            </div>
+            <div>
+              <label class="lbl" for="f-aff">Affected services or users</label>
+              <input id="f-aff" class="fld" type="text" placeholder="e.g. All Windows Server VMs in EU region; app owners" value=${f.affected} onInput=${this.setForm('affected')}>
+            </div>
+            <fieldset style="border:0;padding:0;margin:0">
+              <legend class="eyebrow" style="margin-bottom:12px">Submitted by</legend>
+              <div class="grid-auto">
+                <div>
+                  <label class="lbl" for="f-name">Your name <span class="req">*</span></label>
+                  <input id="f-name" class=${bad('name')} type="text" autocomplete="name" value=${f.name} onInput=${this.setForm('name')}>
+                  ${err.name && html`<div class="err">Add your name.</div>`}
+                </div>
+                <div>
+                  <label class="lbl" for="f-email">Work email <span class="req">*</span></label>
+                  <input id="f-email" class=${bad('email')} type="email" autocomplete="email" value=${f.email} onInput=${this.setForm('email')}>
+                  ${err.email && html`<div class="err">Enter a valid email address.</div>`}
+                </div>
+                <div>
+                  <label class="lbl" for="f-team">Team / department</label>
+                  <input id="f-team" class="fld" type="text" value=${f.team} onInput=${this.setForm('team')}>
+                </div>
+              </div>
+            </fieldset>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;border-top:1px solid var(--line2);padding-top:22px;margin-top:4px">
+              <button type="submit" class="btn primary">Submit idea</button>
+              <button type="button" class="btn ghost" onClick=${() => this.setState({ form: emptyForm(), errors: {}, lastId: null })}>Clear form</button>
+            </div>
+          </form>
+        </section>
+
+        <aside class="side-col">
+          <div class="card" style="padding:24px">
+            <h2 style="margin:0 0 18px;font-size:17px;font-weight:700">What happens next</h2>
+            <ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:18px">
+              ${step(1, 's-new', 'New', 'Your idea lands in the dashboard with decision Pending.')}
+              ${step(2, 's-assessment', 'Assessment', 'Scored with WSJF (cost of delay ÷ job size); priority and an owner are set.')}
+              ${step(3, 'd-approved', 'Decision', 'Approved, On hold or Rejected — with a note explaining why.')}
+              ${step(4, 's-progress', 'In progress → Closed', 'Approved ideas are delivered by the assigned owner and closed when done.')}
+            </ol>
+          </div>
+          <div style="background:#E4ECF7;border-radius:14px;padding:20px 24px;color:#1E3A5F;font-size:14px;line-height:1.5">
+            <strong>Tip:</strong> a good idea names the problem, who it affects and how you would know it worked.
+          </div>
+        </aside>
+      </main>`;
+  }
+
+  renderDashboard() {
+    const s = this.state;
+    const ideas = s.ideas;
+    const count = (fn) => ideas.filter(fn).length;
+    const kpis = [
+      { label: 'Total ideas', value: ideas.length, sub: count((i) => i.stage !== 'closed') + ' open', cls: 'd-pending' },
+      { label: 'New', value: count((i) => i.stage === 'new'), sub: 'Awaiting triage', cls: 's-new' },
+      { label: 'In assessment', value: count((i) => i.stage === 'assessment'), sub: count((i) => i.stage === 'assessment' && wsjf(i) === null) + ' not yet scored', cls: 's-assessment' },
+      { label: 'In progress', value: count((i) => i.stage === 'progress'), sub: count((i) => i.stage === 'progress' && !i.assignee) + ' without an owner', cls: 's-progress' },
+      { label: 'Decision pending', value: count((i) => i.decision === 'pending'), sub: count((i) => i.decision === 'approved') + ' approved · ' + count((i) => i.decision === 'rejected') + ' rejected', cls: 'd-hold' }
+    ];
+    const chips = [['all', 'All'], ['new', 'New'], ['assessment', 'In assessment'], ['progress', 'In progress'], ['closed', 'Closed']];
+    const q = s.q.trim().toLowerCase();
+    const rows = ideas.filter((i) =>
+      (s.stage === 'all' || i.stage === s.stage) &&
+      (s.decFilter === 'all' || i.decision === s.decFilter) &&
+      (s.prioFilter === 'all' || (s.prioFilter === 'none' ? !i.priority : i.priority === s.prioFilter)) &&
+      (!q || (i.id + ' ' + i.title + ' ' + i.category + ' ' + i.assignee + ' ' + i.name).toLowerCase().indexOf(q) !== -1)
+    ).sort((a, b) => {
+      if (s.sort === 'wsjf') {
+        const x = wsjf(a), y = wsjf(b);
+        if (x !== y) return y === null ? -1 : x === null ? 1 : y - x;
+      }
+      return a.date < b.date ? 1 : a.date > b.date ? -1 : (a.id < b.id ? 1 : -1);
+    });
+    const maxW = Math.max(1, ...ideas.map((i) => wsjf(i) || 0));
+    const sel = (label, value, onChange, opts, width) => html`
+      <label style="display:block"><span class="sr">${label}</span>
+        <select class="fld" value=${value} onChange=${onChange} style=${'width:' + width + 'px'}>
+          ${opts.map((o) => html`<option value=${o[0]}>${o[1]}</option>`)}
+        </select>
+      </label>`;
+
+    return html`
+      <main class="wrap" style="display:flex;flex-direction:column;gap:24px">
+        <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
+          <div>
+            <h1 class="title">Idea dashboard</h1>
+            <p class="muted" style="margin:6px 0 0;font-size:15px">Track new ideas and ideas in progress. Select an idea to score it with WSJF, set priority, assign an owner and record the decision.</p>
+          </div>
+          <button type="button" class="btn primary" onClick=${() => this.setState({ view: 'submit' })}>${Icon.plus}New idea</button>
+        </div>
+
+        <div class="kpis">
+          ${kpis.map((k) => html`
+            <div class="card kpi" key=${k.label}>
+              <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:#3F4650"><span class=${'pill ' + k.cls} style="width:10px;height:10px;padding:0"></span>${k.label}</div>
+              <div class="v">${k.value}</div>
+              <div class="muted" style="font-size:13px">${k.sub}</div>
+            </div>`)}
+        </div>
+
+        <section class="card">
+          <div class="toolbar">
+            <div role="group" aria-label="Filter by stage" style="display:flex;flex-wrap:wrap;gap:8px">
+              ${chips.map((c) => html`
+                <button type="button" key=${c[0]} class=${'chip' + (s.stage === c[0] ? ' on' : '')} aria-pressed=${s.stage === c[0] ? 'true' : 'false'} onClick=${() => this.setState({ stage: c[0] })}>
+                  ${c[1]} <span class="n">${c[0] === 'all' ? ideas.length : count((i) => i.stage === c[0])}</span>
+                </button>`)}
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+              <label style="position:relative;display:block"><span class="sr">Search ideas</span>${Icon.search}
+                <input class="fld" type="search" placeholder="Search title, ID, owner…" value=${s.q} onInput=${(e) => this.setState({ q: e.target.value })} style="width:240px;padding-left:36px">
+              </label>
+              ${sel('Filter by decision', s.decFilter, (e) => this.setState({ decFilter: e.target.value }), [['all', 'All decisions'], ['pending', 'Pending'], ['approved', 'Approved'], ['hold', 'On hold'], ['rejected', 'Rejected']], 170)}
+              ${sel('Filter by priority', s.prioFilter, (e) => this.setState({ prioFilter: e.target.value }), [['all', 'All priorities'], ['critical', 'Critical'], ['high', 'High'], ['medium', 'Medium'], ['low', 'Low'], ['none', 'Not set']], 160)}
+              ${sel('Sort ideas', s.sort, (e) => this.setState({ sort: e.target.value }), [['newest', 'Sort: newest first'], ['wsjf', 'Sort: highest WSJF']], 190)}
+            </div>
+          </div>
+
+          <div style="overflow-x:auto">
+            <div class="tbl">
+              <div class="tr head"><div>ID</div><div>Idea</div><div>Submitted</div><div>WSJF</div><div>Priority</div><div>Assigned to</div><div>Stage</div><div>Decision</div></div>
+              ${rows.map((i) => {
+                const sc = wsjf(i);
+                const ratio = sc === null ? 0 : sc / maxW;
+                return html`
+                <div class="tr body" key=${i.id}>
+                  <div class="mono" style="font-size:13px;color:#3F4650">${i.id}</div>
+                  <div style="min-width:0">
+                    <button type="button" class="rowbtn" onClick=${() => this.setState({ selId: i.id })}>${i.title}</button>
+                    <div class="muted ellipsis" style="font-size:13px;margin-top:3px">${i.category} · ${i.description}</div>
+                  </div>
+                  <div><div style="font-weight:500">${i.name}</div><div class="muted" style="font-size:13px;margin-top:2px">${fmt(i.date)}</div></div>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <span class="mono" style="font-weight:500;width:38px">${sc === null ? '—' : sc.toFixed(1)}</span>
+                    <span class="bar"><span class=${ratio >= 0.66 ? 'sc-hi' : ratio >= 0.33 ? 'sc-mid' : 'sc-lo'} style=${'width:' + Math.round(ratio * 100) + '%'}></span></span>
+                  </div>
+                  <div><span class=${'pill ' + (i.priority ? 'p-' + i.priority : 'p-none')}>${PRIO[i.priority] || 'Not set'}</span></div>
+                  <div style="display:flex;align-items:center;gap:8px;min-width:0">
+                    <span class="avatar" aria-hidden="true" style=${'background:' + avBg(i.assignee)}>${initials(i.assignee)}</span>
+                    <span class=${'ellipsis' + (i.assignee ? '' : ' muted')}>${i.assignee || 'Unassigned'}</span>
+                  </div>
+                  <div><span class=${'pill s-' + i.stage}><span class="dot"></span>${STAGE[i.stage]}</span></div>
+                  <div><span class=${'pill d-' + i.decision}>${DEC[i.decision]}</span></div>
+                </div>`;
+              })}
+              ${rows.length === 0 && html`
+                <div style="padding:48px 20px;text-align:center;border-top:1px solid var(--line2)">
+                  <div style="font-weight:600;font-size:16px">No ideas match these filters</div>
+                  <div class="muted" style="font-size:14px;margin-top:6px">Try another stage, decision or search term.</div>
+                </div>`}
+            </div>
+          </div>
+          <div class="muted" style="padding:14px 20px;border-top:1px solid var(--line2);font-size:13px">Showing ${rows.length} of ${ideas.length} ideas · ${s.sort === 'wsjf' ? 'highest WSJF first' : 'newest first'}</div>
+        </section>
+      </main>`;
+  }
+
+  renderDrawer() {
+    const i = this.state.ideas.find((x) => x.id === this.state.selId);
+    if (!i) return null;
+    const c = cod(i);
+    const sc = wsjf(i);
+    const on = (k) => (e) => this.patchSel(k, e.target.value);
+    const fib = (id, label, key) => html`
+      <div>
+        <label class="lbl" for=${id} style="font-size:13px">${label}</label>
+        <select id=${id} class="fld" value=${i[key] ? String(i[key]) : ''} onChange=${on(key)}>
+          <option value="">—</option>
+          ${FIB.map((n) => html`<option value=${String(n)}>${n}</option>`)}
+        </select>
+      </div>`;
+    const h3 = 'margin:18px 0 8px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)';
+    return html`
+      <div>
+        <button type="button" class="backdrop" aria-label="Close details" onClick=${() => this.setState({ selId: null })}></button>
+        <aside class="drawer" role="dialog" aria-modal="true" aria-label=${'Idea ' + i.id} tabindex="-1" ref=${(el) => { this.drawerEl = el; }}>
+          <div style="padding:22px 24px;border-bottom:1px solid var(--line2);display:flex;gap:16px;align-items:flex-start;justify-content:space-between">
+            <div style="min-width:0">
+              <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">
+                <span class="mono" style="font-size:13px;color:#3F4650">${i.id}</span>
+                <span class=${'pill s-' + i.stage}><span class="dot"></span>${STAGE[i.stage]}</span>
+                <span class=${'pill d-' + i.decision}>${DEC[i.decision]}</span>
+              </div>
+              <h2 style="margin:0;font-size:21px;font-weight:700;line-height:1.3">${i.title}</h2>
+              <div class="muted" style="font-size:14px;margin-top:6px">${i.category} · submitted by ${i.name}${i.team ? ' (' + i.team + ')' : ''} on ${fmt(i.date)}</div>
+            </div>
+            <button type="button" class="iconbtn" aria-label="Close details" onClick=${() => this.setState({ selId: null })}>${Icon.close}</button>
+          </div>
+
+          <div style="padding:24px;display:flex;flex-direction:column;gap:26px">
+            <section>
+              <h3 style=${h3.replace('18px', '0')}>Description</h3>
+              <p style="margin:0;font-size:15px;line-height:1.6;white-space:pre-line">${i.description}</p>
+              ${i.benefit && html`<h3 style=${h3}>Expected benefit</h3><p style="margin:0;font-size:15px;line-height:1.6;white-space:pre-line">${i.benefit}</p>`}
+              ${i.affected && html`<h3 style=${h3}>Affected services / users</h3><p style="margin:0;font-size:15px;line-height:1.6">${i.affected}</p>`}
+              <div class="muted" style="font-size:13px;margin-top:14px">Submitter's urgency: ${URG[i.urgency] || '—'} · ${i.email}</div>
+            </section>
+
+            <section style="background:var(--soft);border:1px solid var(--line2);border-radius:12px;padding:20px">
+              <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px">
+                <div style="min-width:0;flex:1 1 200px">
+                  <h3 style="margin:0;font-size:16px;font-weight:700">WSJF scoring</h3>
+                  <div class="hint" style="margin-top:4px">Weighted Shortest Job First = Cost of Delay ÷ Job Size. Score each factor relative to other ideas on the Fibonacci scale.</div>
+                </div>
+                <div style="display:flex;gap:16px">
+                  <div style="text-align:right"><div class="eyebrow">Cost of delay</div><div class="mono" style="font-size:22px;font-weight:600;margin-top:4px">${c === null ? '—' : c}</div></div>
+                  <div style="text-align:right;padding-left:16px;border-left:1px solid var(--line)"><div class="eyebrow">WSJF</div><div class="mono" style="font-size:28px;font-weight:600;color:var(--accent)">${sc === null ? '—' : sc.toFixed(1)}</div></div>
+                </div>
+              </div>
+              <div class="eyebrow" style="margin-bottom:10px">Cost of delay</div>
+              <div class="g3">
+                ${fib('w-bv', 'User / business value', 'bv')}
+                ${fib('w-tc', 'Time criticality', 'tc')}
+                ${fib('w-rr', 'Risk reduction / opp. enablement', 'rr')}
+              </div>
+              <div class="g3" style="margin-top:16px;padding-top:16px;border-top:1px solid var(--line2)">
+                ${fib('w-js', 'Job size', 'js')}
+                <div class="hint" style="grid-column:span 2;margin-top:0;align-self:end;line-height:1.5">Relative effort, duration and complexity to deliver. Bigger jobs lower the WSJF score.</div>
+              </div>
+              <div style="margin-top:16px">
+                <label class="lbl" for="a-notes" style="font-size:13px">Assessment notes</label>
+                <textarea id="a-notes" class="fld" rows="3" placeholder="Feasibility, dependencies, rationale for the decision…" value=${i.notes} onInput=${on('notes')}></textarea>
+              </div>
+            </section>
+
+            <section>
+              <h3 style="margin:0 0 16px;font-size:16px;font-weight:700">Triage &amp; decision</h3>
+              <div class="g2">
+                <div><label class="lbl" for="t-prio">Priority</label>
+                  <select id="t-prio" class="fld" value=${i.priority} onChange=${on('priority')}>
+                    <option value="">Not set</option>${Object.keys(PRIO).map((k) => html`<option value=${k}>${PRIO[k]}</option>`)}
+                  </select></div>
+                <div><label class="lbl" for="t-asg">Assigned person</label>
+                  <select id="t-asg" class="fld" value=${i.assignee} onChange=${on('assignee')}>
+                    <option value="">Unassigned</option>${ASSIGNEES.map((n) => html`<option value=${n}>${n}</option>`)}
+                  </select></div>
+                <div><label class="lbl" for="t-stage">Stage</label>
+                  <select id="t-stage" class="fld" value=${i.stage} onChange=${on('stage')}>
+                    ${Object.keys(STAGE).map((k) => html`<option value=${k}>${STAGE[k]}</option>`)}
+                  </select></div>
+                <div><label class="lbl" for="t-dec">Decision status</label>
+                  <select id="t-dec" class="fld" value=${i.decision} onChange=${on('decision')}>
+                    ${Object.keys(DEC).map((k) => html`<option value=${k}>${DEC[k]}</option>`)}
+                  </select></div>
+              </div>
+              <div class="hint" style="margin-top:12px">Changes save as you make them.</div>
+            </section>
+          </div>
+
+          <div style="margin-top:auto;padding:16px 24px;border-top:1px solid var(--line2);display:flex;justify-content:flex-end">
+            <button type="button" class="btn primary" onClick=${() => this.setState({ selId: null })}>Done</button>
+          </div>
+        </aside>
+      </div>`;
+  }
+
+  render(_, s) {
+    return html`
+      ${this.renderHeader(s.view)}
+      ${s.view === 'assistant' && this.renderAssistant()}
+      ${s.view === 'submit' && this.renderSubmit()}
+      ${s.view === 'dashboard' && this.renderDashboard()}
+      ${this.renderDrawer()}
+      <footer>Idea Hub demo · WSJF scoring · all names and ideas are fictional.</footer>`;
+  }
+}
+
+render(html`<${App} />`, document.getElementById('app'));
+</script>
+</body>
+</html>
