@@ -136,6 +136,17 @@ const AV = ['#0E5C8C', '#0B6B5F', '#5B3FA0', '#8A4B12', '#3F4650', '#7A2E5C'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const FIRST_NUM = 1049;
 
+/* ------------------------------------------------------------------ */
+/* Supabase connection                                                 */
+/* Paste your Project URL and Publishable (or legacy "anon public")    */
+/* key here. Both are designed to be public; access is controlled by   */
+/* the rules in supabase/setup.sql. Leave empty for browser-only mode. */
+/* ------------------------------------------------------------------ */
+const SUPABASE_URL = 'https://uszqidtluxjkgeollejq.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_qD2Y7FMlX9ZX8Qm7qKWpBg_RtxGezs9';
+const REMOTE = !!(SUPABASE_URL && SUPABASE_KEY);
+const MAX_IDEAS = 100;
+
 const fmt = (d) => { const p = d.split('-'); return Number(p[2]) + ' ' + MONTHS[Number(p[1]) - 1] + ' ' + p[0]; };
 const initials = (n) => n ? n.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase() : '—';
 const avBg = (n) => { if (!n) return '#B5BDC6'; let h = 0; for (let k = 0; k < n.length; k++) h = (h + n.charCodeAt(k)) % AV.length; return AV[h]; };
@@ -175,6 +186,44 @@ const store = {
   clear() { try { localStorage.removeItem(LS_KEY); } catch (e) { /* ignore */ } }
 };
 
+/* Supabase REST API (PostgREST). Email is never read back: the public key can't see that column. */
+const COLS = 'id,title,category,urgency,description,benefit,affected,name,team,bv,tc,rr,js,notes,priority,assignee,stage,decision,created_at';
+const api = {
+  async req(path, opts) {
+    const o = opts || {};
+    const res = await fetch(SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/' + path, {
+      method: o.method || 'GET',
+      headers: Object.assign({ apikey: SUPABASE_KEY, 'Content-Type': 'application/json' }, o.headers || {}),
+      body: o.body
+    });
+    if (!res.ok) {
+      let msg = '';
+      try { const j = await res.json(); msg = j.message || j.error || ''; } catch (e) { /* not JSON */ }
+      const err = new Error(msg || 'HTTP ' + res.status);
+      err.status = res.status;
+      throw err;
+    }
+    return res.status === 204 ? null : res.json();
+  },
+  list() { return this.req('ideas?select=' + COLS + '&order=created_at.desc&limit=200'); },
+  async insert(row) {
+    const id = await this.req('rpc/submit_idea', { method: 'POST', body: JSON.stringify({
+      p_title: row.title, p_category: row.category, p_urgency: row.urgency, p_description: row.description,
+      p_benefit: row.benefit, p_affected: row.affected, p_name: row.name, p_email: row.email, p_team: row.team }) });
+    const rows = await this.req('ideas?select=' + COLS + '&id=eq.' + encodeURIComponent(id));
+    return rows[0];
+  },
+  update(id, patch) { return this.req('ideas?id=eq.' + encodeURIComponent(id), { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(patch) }); },
+  byEmail(email) { return this.req('rpc/ideas_by_email', { method: 'POST', body: JSON.stringify({ p_email: email }) }); }
+};
+const fromRow = (r) => Object.assign({}, r, { email: '', date: String(r.created_at).slice(0, 10) });
+const friendlyError = (e) => {
+  const m = String((e && e.message) || '');
+  if (/IDEA_LIMIT_REACHED/.test(m)) return 'The demo is full — it holds at most ' + MAX_IDEAS + ' ideas.';
+  if (e instanceof TypeError || /fetch|network/i.test(m)) return 'Can\'t reach the database right now. Please try again in a moment.';
+  return 'The database refused that change (' + m + ').';
+};
+
 const greeting = () => ({ id: 1, from: 'bot', text: 'Hi! I\'m the Hosting Services idea assistant.\n\nI can help you raise a new idea, or check the status of an idea you\'ve already submitted. What would you like to do?', cardId: null });
 
 /* Small inline icons (stroke, currentColor) */
@@ -195,26 +244,28 @@ const Icon = {
 class App extends Component {
   constructor() {
     super();
-    const saved = store.load();
+    const saved = REMOTE ? null : store.load();
     this.state = {
       view: 'assistant',
-      form: emptyForm(), errors: {}, lastId: null,
+      form: emptyForm(), errors: {}, lastId: null, submitting: false, formError: '',
       stage: 'all', q: '', decFilter: 'all', prioFilter: 'all', sort: 'newest', selId: null,
-      ideas: saved ? saved.ideas : seed(),
+      ideas: REMOTE ? [] : (saved ? saved.ideas : seed()),
       nextNum: saved ? saved.nextNum : FIRST_NUM,
+      loading: REMOTE, error: '',
       chat: [greeting()], chatInput: '', typing: false, flow: null, chatChips: null, lastEmail: ''
     };
     this.mid = 100;
+    this.saveTimers = {};
     this.logRef = (el) => { this.logEl = el; };
     this.onKey = (e) => { if (e.key === 'Escape' && this.state.selId) this.setState({ selId: null }); };
   }
 
-  componentDidMount() { document.addEventListener('keydown', this.onKey); }
+  componentDidMount() { document.addEventListener('keydown', this.onKey); this.reload(); }
   componentWillUnmount() { document.removeEventListener('keydown', this.onKey); clearTimeout(this.chatTimer); }
 
   componentDidUpdate(_, prev) {
     const s = this.state;
-    if (prev.ideas !== s.ideas || prev.nextNum !== s.nextNum) store.save({ ideas: s.ideas, nextNum: s.nextNum });
+    if (!REMOTE && (prev.ideas !== s.ideas || prev.nextNum !== s.nextNum)) store.save({ ideas: s.ideas, nextNum: s.nextNum });
     const n = s.chat.length + (s.typing ? 1 : 0);
     if (this.logEl && (n !== this.lastN || this.logEl !== this.lastEl)) {
       this.lastN = n; this.lastEl = this.logEl;
@@ -224,20 +275,48 @@ class App extends Component {
   }
 
   /* ---------- data helpers ---------- */
-  addIdea(d) {
-    const id = 'HS-' + this.state.nextNum;
-    const idea = {
-      id, title: d.title, category: d.category, urgency: d.urgency || 'medium', description: d.description,
-      benefit: d.benefit || '', affected: d.affected || '', name: d.name, email: d.email, team: d.team || '',
-      date: today(), bv: null, tc: null, rr: null, js: null, notes: '', priority: '', assignee: '', stage: 'new', decision: 'pending'
+  async reload() {
+    if (!REMOTE) return;
+    try {
+      const rows = await api.list();
+      this.setState({ ideas: rows.map(fromRow), loading: false, error: '' });
+    } catch (e) {
+      this.setState({ loading: false, error: friendlyError(e) });
+    }
+  }
+
+  /* Saves a new idea and returns its ID. Throws (with a readable message) if the database refuses it. */
+  async addIdea(d) {
+    const row = {
+      title: d.title, category: d.category, urgency: d.urgency || 'medium', description: d.description,
+      benefit: d.benefit || '', affected: d.affected || '', name: d.name, email: d.email, team: d.team || ''
     };
-    return { id, upd: { ideas: [idea].concat(this.state.ideas), nextNum: this.state.nextNum + 1 } };
+    if (REMOTE) {
+      let saved;
+      try { saved = await api.insert(row); } catch (e) { throw new Error(friendlyError(e)); }
+      const idea = fromRow(saved);
+      this.setState({ ideas: [idea].concat(this.state.ideas.filter((x) => x.id !== idea.id)), error: '' });
+      return idea.id;
+    }
+    const id = 'HS-' + this.state.nextNum;
+    const idea = Object.assign(row, { id, date: today(), bv: null, tc: null, rr: null, js: null, notes: '', priority: '', assignee: '', stage: 'new', decision: 'pending' });
+    this.setState({ ideas: [idea].concat(this.state.ideas), nextNum: this.state.nextNum + 1 });
+    return id;
   }
 
   patchSel(key, raw) {
     const numeric = ['bv', 'tc', 'rr', 'js'].indexOf(key) !== -1;
     const v = numeric ? (raw === '' ? null : Number(raw)) : raw;
-    this.setState({ ideas: this.state.ideas.map((i) => i.id === this.state.selId ? Object.assign({}, i, { [key]: v }) : i) });
+    const id = this.state.selId;
+    this.setState({ ideas: this.state.ideas.map((i) => i.id === id ? Object.assign({}, i, { [key]: v }) : i) });
+    if (!REMOTE) return;
+    const timerKey = id + ':' + key;
+    clearTimeout(this.saveTimers[timerKey]);
+    this.saveTimers[timerKey] = setTimeout(() => {
+      api.update(id, { [key]: v })
+        .then(() => { if (this.state.error) this.setState({ error: '' }); })
+        .catch((e) => { this.setState({ error: friendlyError(e) }); this.reload(); });
+    }, key === 'notes' ? 700 : 0);
   }
 
   resetDemo() {
@@ -252,17 +331,23 @@ class App extends Component {
     return (e) => this.setState({ form: Object.assign({}, this.state.form, { [k]: e.target.value }), errors: Object.assign({}, this.state.errors, { [k]: false }) });
   }
 
-  submit(e) {
+  async submit(e) {
     e.preventDefault();
+    if (this.state.submitting) return;
     const f = this.state.form;
     const errors = {
-      title: !f.title.trim(), category: !f.category, description: f.description.trim().length < 15,
-      name: !f.name.trim(), email: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())
+      title: f.title.trim().length < 4, category: !f.category, description: f.description.trim().length < 15,
+      name: f.name.trim().length < 2, email: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())
     };
-    if (Object.values(errors).some(Boolean)) { this.setState({ errors, lastId: null }); return; }
+    if (Object.values(errors).some(Boolean)) { this.setState({ errors, lastId: null, formError: '' }); return; }
     const t = (x) => x.trim();
-    const r = this.addIdea({ title: t(f.title), category: f.category, urgency: f.urgency, description: t(f.description), benefit: t(f.benefit), affected: t(f.affected), name: t(f.name), email: t(f.email), team: t(f.team) });
-    this.setState(Object.assign(r.upd, { form: emptyForm(), errors: {}, lastId: r.id }));
+    this.setState({ submitting: true, formError: '' });
+    try {
+      const id = await this.addIdea({ title: t(f.title), category: f.category, urgency: f.urgency, description: t(f.description), benefit: t(f.benefit), affected: t(f.affected), name: t(f.name), email: t(f.email), team: t(f.team) });
+      this.setState({ form: emptyForm(), errors: {}, lastId: id, submitting: false });
+    } catch (err) {
+      this.setState({ submitting: false, formError: err.message });
+    }
   }
 
   /* ---------- assistant ---------- */
@@ -275,7 +360,8 @@ class App extends Component {
     this.chatTimer = setTimeout(() => this.respond(t), 550);
   }
 
-  respond(t) {
+  async respond(t) {
+    if (REMOTE) await this.reload(); /* fresh statuses before answering */
     const s = this.state;
     const low = t.toLowerCase();
     const out = [];
@@ -296,7 +382,7 @@ class App extends Component {
       }
     };
 
-    const findStatus = () => {
+    const findStatus = async () => {
       if (idMatch) {
         const id = 'HS-' + idMatch[1];
         if (s.ideas.find((x) => x.id === id)) say('Here\'s the latest on ' + id + ':', id);
@@ -305,7 +391,14 @@ class App extends Component {
       }
       const email = emailMatch ? emailMatch[0].toLowerCase() : (/\bmy ideas?\b/.test(low) && s.lastEmail ? s.lastEmail : null);
       if (email) {
-        const mine = s.ideas.filter((x) => x.email.toLowerCase() === email);
+        let mine;
+        if (REMOTE) {
+          let ids = [];
+          try { ids = await api.byEmail(email); } catch (e) { say(friendlyError(e)); return true; }
+          mine = ids.map((id) => this.state.ideas.find((x) => x.id === id)).filter(Boolean);
+        } else {
+          mine = s.ideas.filter((x) => x.email.toLowerCase() === email);
+        }
         upd.lastEmail = email;
         if (!mine.length) { say('I didn\'t find any ideas submitted with ' + email + '. Is that the address you used?'); return true; }
         if (mine.length === 1) { say('I found one idea submitted by ' + email + ':', mine[0].id); return true; }
@@ -352,21 +445,25 @@ class App extends Component {
         }
       } else if (step === 'confirm') {
         if (/submit|yes|confirm|^ok|send/.test(low)) {
-          const r = this.addIdea(d);
-          upd = Object.assign(upd, r.upd, { lastEmail: d.email.toLowerCase() });
-          flow = null;
-          say('Done! Your idea is raised as ' + r.id + '. It starts as New with decision Pending — the Hosting Services team will score it with WSJF and assign an owner.\n\nAsk me about ' + r.id + ' any time to see where it stands.', r.id);
+          try {
+            const id = await this.addIdea(d);
+            upd.lastEmail = d.email.toLowerCase();
+            flow = null;
+            say('Done! Your idea is raised as ' + id + '. It starts as New with decision Pending — the Hosting Services team will score it with WSJF and assign an owner.\n\nAsk me about ' + id + ' any time to see where it stands.', id);
+          } catch (err) {
+            say('Sorry, I couldn\'t save your idea. ' + err.message + '\n\nYou can try “Submit idea” again, or “Cancel”.');
+          }
         } else {
           say('Reply “Submit idea” to send it, “Start over” to begin again, or “Cancel”.');
         }
       }
     } else if (flow && flow.mode === 'status') {
-      if (findStatus()) flow = null;
+      if (await findStatus()) flow = null;
       else say('I need an idea ID like HS-1043, or the email address you used when submitting. Type “cancel” to go back.');
     } else if (/wsjf|score|prioriti/.test(low)) {
       say('WSJF (Weighted Shortest Job First) ranks ideas by Cost of Delay ÷ Job Size.\n\nCost of Delay = User/business value + Time criticality + Risk reduction/opportunity enablement, each scored relative to other ideas on a 1–20 Fibonacci scale. Job Size is the relative effort to deliver.\n\nA valuable, urgent, small job gets the highest score and is picked up first.');
     } else if (idMatch || emailMatch || /status|check|track|progress|where|my ideas?\b/.test(low)) {
-      if (!findStatus()) { flow = { mode: 'status' }; say('Sure — give me the idea ID (for example HS-1043) or the email address you submitted it with.'); }
+      if (!(await findStatus())) { flow = { mode: 'status' }; say('Sure — give me the idea ID (for example HS-1043) or the email address you submitted it with.'); }
     } else if (/idea|raise|submit|new|propose|suggest/.test(low)) {
       const m = t.match(/idea\s+(?:to|for|about)\s+(.{4,})/i);
       startRaise(m ? cap(m[1].replace(/[.!?]+$/, '').trim()) : null);
@@ -389,7 +486,7 @@ class App extends Component {
   /* ---------- views ---------- */
   renderHeader(view) {
     const tab = (key, label, extra) => html`
-      <button type="button" class=${'tab' + (view === key ? ' on' : '')} aria-pressed=${view === key ? 'true' : 'false'} onClick=${() => this.setState({ view: key, selId: null })}>${extra}${label}</button>`;
+      <button type="button" class=${'tab' + (view === key ? ' on' : '')} aria-pressed=${view === key ? 'true' : 'false'} onClick=${() => { this.setState({ view: key, selId: null }); if (key === 'dashboard') this.reload(); }}>${extra}${label}</button>`;
     return html`
       <header class="top">
         <div class="top-in">
@@ -407,10 +504,20 @@ class App extends Component {
           </nav>
         </div>
       </header>
-      <div class="demo-band"><div class="in">
-        <span><strong>Demo</strong> · fictional data, saved only in your browser.</span>
-        <button type="button" class="linkbtn" onClick=${() => this.resetDemo()}>Reset demo data</button>
-      </div></div>`;
+      ${REMOTE ? html`
+        <div class="demo-band"><div class="in">
+          <span><strong>Public demo</strong> · ideas are shared with everyone who opens this page — please don't enter real personal data. ${this.state.ideas.length} of ${MAX_IDEAS} idea slots used.</span>
+          <button type="button" class="linkbtn" onClick=${() => this.reload()}>Refresh</button>
+        </div></div>` : html`
+        <div class="demo-band"><div class="in">
+          <span><strong>Demo</strong> · fictional data, saved only in your browser.</span>
+          <button type="button" class="linkbtn" onClick=${() => this.resetDemo()}>Reset demo data</button>
+        </div></div>`}
+      ${this.state.error && html`
+        <div role="alert" style="background:#FAE1DD;color:#8E2A1E;font-size:14px"><div style="max-width:1360px;margin:0 auto;padding:10px 24px;display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between">
+          <span>${this.state.error}</span>
+          <button type="button" class="linkbtn" onClick=${() => this.reload()}>Try again</button>
+        </div></div>`}`;
   }
 
   renderStatusCard(id) {
@@ -592,8 +699,9 @@ class App extends Component {
                 </div>
               </div>
             </fieldset>
+            ${s.formError && html`<div role="alert" class="err" style="font-size:14px;margin:0">${s.formError}</div>`}
             <div style="display:flex;flex-wrap:wrap;gap:12px;border-top:1px solid var(--line2);padding-top:22px;margin-top:4px">
-              <button type="submit" class="btn primary">Submit idea</button>
+              <button type="submit" class="btn primary" disabled=${s.submitting}>${s.submitting ? 'Submitting…' : 'Submit idea'}</button>
               <button type="button" class="btn ghost" onClick=${() => this.setState({ form: emptyForm(), errors: {}, lastId: null })}>Clear form</button>
             </div>
           </form>
@@ -713,7 +821,9 @@ class App extends Component {
                   <div><span class=${'pill d-' + i.decision}>${DEC[i.decision]}</span></div>
                 </div>`;
               })}
-              ${rows.length === 0 && html`
+              ${s.loading && html`
+                <div style="padding:48px 20px;text-align:center;border-top:1px solid var(--line2)" class="muted">Loading ideas…</div>`}
+              ${!s.loading && rows.length === 0 && html`
                 <div style="padding:48px 20px;text-align:center;border-top:1px solid var(--line2)">
                   <div style="font-weight:600;font-size:16px">No ideas match these filters</div>
                   <div class="muted" style="font-size:14px;margin-top:6px">Try another stage, decision or search term.</div>
@@ -763,7 +873,7 @@ class App extends Component {
               <p style="margin:0;font-size:15px;line-height:1.6;white-space:pre-line">${i.description}</p>
               ${i.benefit && html`<h3 style=${h3}>Expected benefit</h3><p style="margin:0;font-size:15px;line-height:1.6;white-space:pre-line">${i.benefit}</p>`}
               ${i.affected && html`<h3 style=${h3}>Affected services / users</h3><p style="margin:0;font-size:15px;line-height:1.6">${i.affected}</p>`}
-              <div class="muted" style="font-size:13px;margin-top:14px">Submitter's urgency: ${URG[i.urgency] || '—'} · ${i.email}</div>
+              <div class="muted" style="font-size:13px;margin-top:14px">Submitter's urgency: ${URG[i.urgency] || '—'}${i.email ? ' · ' + i.email : ''}</div>
             </section>
 
             <section style="background:var(--soft);border:1px solid var(--line2);border-radius:12px;padding:20px">
