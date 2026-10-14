@@ -47,7 +47,7 @@ textarea.fld{resize:vertical;line-height:1.5}
 .tab.on{background:#fff;color:var(--ink)}
 .demo-band{background:#FFF4DE;color:#5C3B00;font-size:13px}
 .demo-band .in{max-width:1360px;margin:0 auto;padding:8px 24px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
-.linkbtn{all:unset;cursor:pointer;text-decoration:underline;font-weight:600}
+.linkbtn{all:unset;cursor:pointer;text-decoration:underline;font-weight:600;display:inline-flex;align-items:center;min-height:24px;padding:2px 4px;margin:-2px -4px}
 .linkbtn:focus-visible{outline:2px solid var(--accent)}
 
 /* buttons, chips, pills */
@@ -77,7 +77,11 @@ textarea.fld{resize:vertical;line-height:1.5}
 .kpi .v{font-size:34px;font-weight:600;font-family:'IBM Plex Mono',monospace;letter-spacing:-.02em;line-height:1.1}
 .toolbar{padding:18px 20px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line2)}
 .tbl{min-width:1280px}
-.tr{display:grid;grid-template-columns:84px 84px minmax(260px,2.4fr) 170px 130px 110px 170px 140px 130px;gap:16px;padding:16px 20px;align-items:center;font-size:14px}
+.tr{display:grid;grid-template-columns:76px 76px minmax(220px,2.4fr) 150px 118px 100px 160px 132px 112px;gap:12px;padding:16px 20px;align-items:center;font-size:14px}
+.skip{position:absolute;left:12px;top:-80px;z-index:20;background:#fff;color:var(--ink);padding:10px 16px;border-radius:8px;font-weight:600;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.skip:focus{top:12px}
+main:focus{outline:none}
+.fld::placeholder{color:#5B6672;opacity:1}
 .vote{min-height:44px;min-width:64px;padding:0 12px;border:1px solid #C9CFD6;border-radius:999px;background:#fff;color:#2E3A46;font-size:14px;font-weight:600;font-family:'IBM Plex Mono',monospace;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
 .vote:hover{border-color:var(--accent);color:var(--accent)}
 .vote.on{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -91,7 +95,7 @@ textarea.fld{resize:vertical;line-height:1.5}
 .tr.head{padding:12px 20px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
 .tr.body{border-top:1px solid var(--line2)}
 .tr.body:hover{background:var(--soft)}
-.rowbtn{all:unset;cursor:pointer;font-weight:600;font-size:15px;line-height:1.35}
+.rowbtn{all:unset;cursor:pointer;font-weight:600;font-size:15px;line-height:1.35;display:inline-block;padding:2px 0;min-height:24px}
 .rowbtn:hover{color:var(--accent);text-decoration:underline}
 .rowbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .ellipsis{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -159,7 +163,7 @@ const MAX_IDEAS = 100;
 
 const fmt = (d) => { const p = d.split('-'); return Number(p[2]) + ' ' + MONTHS[Number(p[1]) - 1] + ' ' + p[0]; };
 const initials = (n) => n ? n.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase() : '—';
-const avBg = (n) => { if (!n) return '#B5BDC6'; let h = 0; for (let k = 0; k < n.length; k++) h = (h + n.charCodeAt(k)) % AV.length; return AV[h]; };
+const avBg = (n) => { if (!n) return '#6B7682'; let h = 0; for (let k = 0; k < n.length; k++) h = (h + n.charCodeAt(k)) % AV.length; return AV[h]; };
 const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -283,7 +287,7 @@ class App extends Component {
     const saved = REMOTE ? null : store.load();
     this.state = {
       view: 'assistant',
-      form: emptyForm(), errors: {}, lastId: null, submitting: false, formError: '',
+      form: emptyForm(), errors: {}, lastId: null, submitting: false, formError: '', errSummary: '',
       stage: 'all', q: '', decFilter: 'all', prioFilter: 'all', sort: 'newest', selId: null,
       ideas: REMOTE ? [] : (saved ? saved.ideas : seed()),
       nextNum: saved ? saved.nextNum : FIRST_NUM,
@@ -294,10 +298,37 @@ class App extends Component {
     this.mid = 100;
     this.saveTimers = {};
     this.logRef = (el) => { this.logEl = el; };
-    this.onKey = (e) => { if (e.key === 'Escape' && this.state.selId) this.setState({ selId: null }); };
+    this.onKey = (e) => { if (e.key === 'Escape' && this.state.selId) this.closeSel(); };
   }
 
-  componentDidMount() { document.addEventListener('keydown', this.onKey); this.reload(); }
+  /* ---------- idea panel (dialog): open, close, keep focus inside ---------- */
+  openSel(id) {
+    const a = document.activeElement;
+    this.returnFocus = a && a.id ? a.id : null; /* remembered by id, so it survives a list refresh */
+    this.setState({ selId: id });
+  }
+
+  closeSel() {
+    this.setState({ selId: null });
+  }
+
+  trapFocus(e) {
+    if (e.key !== 'Tab' || !this.drawerEl) return;
+    const items = [...this.drawerEl.querySelectorAll('button:not([disabled]), select, textarea, input, a[href], [tabindex="0"]')]
+      .filter((el) => el.offsetWidth > 0 || el.offsetHeight > 0);
+    if (!items.length) return;
+    const first = items[0], last = items[items.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey && (active === first || active === this.drawerEl)) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (active === last || active === this.drawerEl)) { e.preventDefault(); first.focus(); }
+  }
+
+  componentDidMount() { document.addEventListener('keydown', this.onKey); this.reload(); this.updateTitle(); }
+
+  updateTitle() {
+    const names = { assistant: 'Idea assistant', submit: 'Submit an idea', dashboard: 'Idea dashboard' };
+    document.title = (names[this.state.view] || 'Idea Hub') + ' · Idea Hub';
+  }
   componentWillUnmount() { document.removeEventListener('keydown', this.onKey); clearTimeout(this.chatTimer); }
 
   componentDidUpdate(_, prev) {
@@ -309,6 +340,20 @@ class App extends Component {
       this.logEl.scrollTop = this.logEl.scrollHeight;
     }
     if (prev.selId !== s.selId && s.selId && this.drawerEl) this.drawerEl.focus();
+    /* panel closed: put focus back where it was (the idea title), or on the page heading */
+    if (prev.selId && !s.selId) {
+      const back = this.returnFocus && document.getElementById(this.returnFocus);
+      this.returnFocus = null;
+      if (back) back.focus();
+      else { const m = document.getElementById('main'); if (m) m.focus(); }
+    }
+    if (prev.view !== s.view) this.updateTitle();
+    /* failed form submit: move focus to the first field with an error */
+    if (this.focusFirstError) {
+      this.focusFirstError = false;
+      const bad = document.querySelector('[aria-invalid="true"]');
+      if (bad) bad.focus();
+    }
   }
 
   /* ---------- data helpers ---------- */
@@ -391,7 +436,7 @@ class App extends Component {
     return html`
       <button type="button" class=${'vote' + (on ? ' on' : '')} aria-pressed=${on ? 'true' : 'false'} disabled=${!!this.state.votePending[i.id]}
         title=${on ? 'You voted for this idea. Click to remove your vote.' : 'Vote for this idea'}
-        aria-label=${(on ? 'Remove your vote from ' : 'Vote for ') + i.id + ', ' + n + (n === 1 ? ' vote' : ' votes')}
+        aria-label=${(on ? 'Voted for ' + i.id + ', ' : 'Vote for ' + i.id + ', ') + n + (n === 1 ? ' vote' : ' votes') + (on ? '. Click to remove your vote' : '')}
         onClick=${() => this.toggleVote(i.id)}>
         ${thumbIcon()}<span>${n}</span>${withWord && html`<span class="word">${on ? 'Voted' : 'Vote'}</span>`}
       </button>`;
@@ -417,7 +462,13 @@ class App extends Component {
       title: f.title.trim().length < 4, category: !f.category, description: f.description.trim().length < 15,
       name: f.name.trim().length < 2, email: !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())
     };
-    if (Object.values(errors).some(Boolean)) { this.setState({ errors, lastId: null, formError: '' }); return; }
+    const nErr = Object.values(errors).filter(Boolean).length;
+    if (nErr) {
+      this.focusFirstError = true;
+      this.setState({ errors, lastId: null, formError: '', errSummary: 'Please fix ' + nErr + (nErr === 1 ? ' field' : ' fields') + ' marked below.' });
+      return;
+    }
+    this.setState({ errSummary: '' });
     const t = (x) => x.trim();
     this.setState({ submitting: true, formError: '' });
     try {
@@ -574,13 +625,14 @@ class App extends Component {
     this.setState({ chat: [greeting()], flow: null, chatChips: null, typing: false, chatInput: '' });
   }
 
-  openIdea(id) { this.setState({ view: 'dashboard', stage: 'all', q: '', decFilter: 'all', prioFilter: 'all', selId: id }); }
+  openIdea(id) { this.returnFocus = null; this.setState({ view: 'dashboard', stage: 'all', q: '', decFilter: 'all', prioFilter: 'all', selId: id }); }
 
   /* ---------- views ---------- */
   renderHeader(view) {
     const tab = (key, label, extra) => html`
-      <button type="button" class=${'tab' + (view === key ? ' on' : '')} aria-pressed=${view === key ? 'true' : 'false'} onClick=${() => { this.setState({ view: key, selId: null }); if (key === 'dashboard') this.reload(); }}>${extra}${label}</button>`;
+      <button type="button" class=${'tab' + (view === key ? ' on' : '')} aria-current=${view === key ? 'page' : null} onClick=${() => { this.setState({ view: key, selId: null }); if (key === 'dashboard') this.reload(); }}>${extra}${label}</button>`;
     return html`
+      <a class="skip" href="#main" onClick=${(e) => { e.preventDefault(); const m = document.getElementById('main'); if (m) m.focus(); }}>Skip to content</a>
       <header class="top">
         <div class="top-in">
           <div class="brand">
@@ -657,7 +709,7 @@ class App extends Component {
     const examples = ['I have an idea to automate SSL certificate renewals', 'What is the status of HS-1045?', 'Vote for HS-1047', 'How does WSJF work?'];
 
     return html`
-      <main class="wrap row">
+      <main class="wrap row" id="main" tabindex="-1">
         <section class="card main-col chat" aria-label="Idea assistant chat">
           <div class="chat-head">
             <div style="display:flex;align-items:center;gap:12px">
@@ -728,10 +780,13 @@ class App extends Component {
         <div><div style="font-weight:600;font-size:15px">${title}</div><div class="muted" style="font-size:14px;line-height:1.45;margin-top:2px">${text}</div></div>
       </li>`;
     return html`
-      <main class="wrap row">
+      <main class="wrap row" id="main" tabindex="-1">
         <section class="card main-col" style="padding:32px">
           <h1 class="title" style="margin-bottom:6px">Submit a new idea</h1>
           <p class="muted" style="margin:0 0 28px;font-size:15px;line-height:1.5">Propose an improvement to Hosting Services. Fields marked <span class="req">*</span> are required. The Hosting Services team reviews new ideas and sets priority, owner and decision.</p>
+
+          ${s.errSummary && Object.values(err).some(Boolean) && html`
+            <div role="alert" style="padding:12px 16px;margin-bottom:24px;border-radius:10px;background:#FAE1DD;color:#8E2A1E;font-size:15px;font-weight:500">${s.errSummary}</div>`}
 
           ${s.lastId && html`
             <div role="status" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;margin-bottom:24px;border-radius:10px;background:#DDF0E2;color:#1C5A2C">
@@ -742,32 +797,32 @@ class App extends Component {
           <form noValidate onSubmit=${(e) => this.submit(e)} style="display:flex;flex-direction:column;gap:22px">
             <div>
               <label class="lbl" for="f-title">Idea title <span class="req">*</span></label>
-              <input id="f-title" class=${bad('title')} type="text" maxlength="120" placeholder="e.g. Self-service VM snapshots before patching" value=${f.title} onInput=${this.setForm('title')} />
-              ${err.title && html`<div class="err">Give your idea a short title.</div>`}
+              <input id="f-title" aria-required="true" aria-invalid=${err.title ? 'true' : null} aria-describedby=${err.title ? 'e-title' : null} class=${bad('title')} type="text" maxlength="120" placeholder="e.g. Self-service VM snapshots before patching" value=${f.title} onInput=${this.setForm('title')} />
+              ${err.title && html`<div class="err" id="e-title">Give your idea a short title.</div>`}
             </div>
             <div class="grid-auto">
               <div>
                 <label class="lbl" for="f-cat">Service area <span class="req">*</span></label>
-                <select id="f-cat" class=${bad('category')} value=${f.category} onChange=${this.setForm('category')}>
+                <select id="f-cat" aria-required="true" aria-invalid=${err.category ? 'true' : null} aria-describedby=${err.category ? 'e-category' : null} class=${bad('category')} value=${f.category} onChange=${this.setForm('category')}>
                   <option value="">Select a service area…</option>
                   ${CATS.map((c) => html`<option value=${c}>${c}</option>`)}
                 </select>
-                ${err.category && html`<div class="err">Choose a service area.</div>`}
+                ${err.category && html`<div class="err" id="e-category">Choose a service area.</div>`}
               </div>
               <div>
                 <label class="lbl" for="f-urg">Suggested urgency</label>
-                <select id="f-urg" class="fld" value=${f.urgency} onChange=${this.setForm('urgency')}>
+                <select id="f-urg" class="fld" aria-describedby="h-urg" value=${f.urgency} onChange=${this.setForm('urgency')}>
                   <option value="low">Low — nice to have</option>
                   <option value="medium">Medium — noticeable benefit</option>
                   <option value="high">High — blocks or costs us today</option>
                 </select>
-                <div class="hint">Final priority is set during assessment.</div>
+                <div class="hint" id="h-urg">Final priority is set during assessment.</div>
               </div>
             </div>
             <div>
               <label class="lbl" for="f-desc">Idea description <span class="req">*</span></label>
-              <textarea id="f-desc" class=${bad('description')} rows="5" placeholder="What would you change, and how would it work?" value=${f.description} onInput=${this.setForm('description')}></textarea>
-              ${err.description && html`<div class="err">Describe the idea in at least a sentence or two.</div>`}
+              <textarea id="f-desc" aria-required="true" aria-invalid=${err.description ? 'true' : null} aria-describedby=${err.description ? 'e-description' : null} class=${bad('description')} rows="5" placeholder="What would you change, and how would it work?" value=${f.description} onInput=${this.setForm('description')}></textarea>
+              ${err.description && html`<div class="err" id="e-description">Describe the idea in at least a sentence or two.</div>`}
             </div>
             <div>
               <label class="lbl" for="f-ben">Expected benefit</label>
@@ -782,13 +837,13 @@ class App extends Component {
               <div class="grid-auto">
                 <div>
                   <label class="lbl" for="f-name">Your name <span class="req">*</span></label>
-                  <input id="f-name" class=${bad('name')} type="text" autocomplete="name" value=${f.name} onInput=${this.setForm('name')} />
-                  ${err.name && html`<div class="err">Add your name.</div>`}
+                  <input id="f-name" aria-required="true" aria-invalid=${err.name ? 'true' : null} aria-describedby=${err.name ? 'e-name' : null} class=${bad('name')} type="text" autocomplete="name" value=${f.name} onInput=${this.setForm('name')} />
+                  ${err.name && html`<div class="err" id="e-name">Add your name.</div>`}
                 </div>
                 <div>
                   <label class="lbl" for="f-email">Work email <span class="req">*</span></label>
-                  <input id="f-email" class=${bad('email')} type="email" autocomplete="email" value=${f.email} onInput=${this.setForm('email')} />
-                  ${err.email && html`<div class="err">Enter a valid email address.</div>`}
+                  <input id="f-email" aria-required="true" aria-invalid=${err.email ? 'true' : null} aria-describedby=${err.email ? 'e-email' : null} class=${bad('email')} type="email" autocomplete="email" value=${f.email} onInput=${this.setForm('email')} />
+                  ${err.email && html`<div class="err" id="e-email">Enter a valid email address.</div>`}
                 </div>
                 <div>
                   <label class="lbl" for="f-team">Team / department</label>
@@ -799,7 +854,7 @@ class App extends Component {
             ${s.formError && html`<div role="alert" class="err" style="font-size:14px;margin:0">${s.formError}</div>`}
             <div style="display:flex;flex-wrap:wrap;gap:12px;border-top:1px solid var(--line2);padding-top:22px;margin-top:4px">
               <button type="submit" class="btn primary" disabled=${s.submitting}>${s.submitting ? 'Submitting…' : 'Submit idea'}</button>
-              <button type="button" class="btn ghost" onClick=${() => this.setState({ form: emptyForm(), errors: {}, lastId: null })}>Clear form</button>
+              <button type="button" class="btn ghost" onClick=${() => this.setState({ form: emptyForm(), errors: {}, lastId: null, errSummary: '' })}>Clear form</button>
             </div>
           </form>
         </section>
@@ -859,7 +914,7 @@ class App extends Component {
       </label>`;
 
     return html`
-      <main class="wrap" style="display:flex;flex-direction:column;gap:24px">
+      <main class="wrap" id="main" tabindex="-1" style="display:flex;flex-direction:column;gap:24px">
         <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px">
           <div>
             <h1 class="title">Idea dashboard</h1>
@@ -896,50 +951,50 @@ class App extends Component {
           </div>
 
           <div style="overflow-x:auto">
-            <div class="tbl">
-              <div class="tr head"><div>ID</div>
-                <div aria-sort=${s.sort === 'votes' ? 'descending' : s.sort === 'votes_asc' ? 'ascending' : 'none'}>
+            <div class="tbl" role="table" aria-label="Ideas" aria-describedby="tbl-summary" aria-rowcount=${rows.length + 1}>
+              <div class="tr head" role="row"><div role="columnheader">ID</div>
+                <div role="columnheader" aria-sort=${s.sort === 'votes' ? 'descending' : s.sort === 'votes_asc' ? 'ascending' : 'none'}>
                   <button type="button" class=${'thbtn' + (s.sort === 'votes' || s.sort === 'votes_asc' ? ' on' : '')}
                     title=${s.sort === 'votes' ? 'Sorted by most votes. Click for fewest votes first.' : 'Sort by most votes'}
                     onClick=${() => this.setState({ sort: s.sort === 'votes' ? 'votes_asc' : 'votes' })}>
                     Votes <span aria-hidden="true">${s.sort === 'votes' ? '↓' : s.sort === 'votes_asc' ? '↑' : '↕'}</span>
                   </button>
-                </div><div>Idea</div><div>Submitted</div><div>WSJF</div><div>Priority</div><div>Assigned to</div><div>Stage</div><div>Decision</div></div>
+                </div><div role="columnheader">Idea</div><div role="columnheader">Submitted</div><div role="columnheader" aria-sort=${s.sort === 'wsjf' ? 'descending' : 'none'}>WSJF</div><div role="columnheader">Priority</div><div role="columnheader">Assigned to</div><div role="columnheader">Stage</div><div role="columnheader">Decision</div></div>
               ${rows.map((i) => {
                 const sc = wsjf(i);
                 const ratio = sc === null ? 0 : sc / maxW;
                 return html`
-                <div class="tr body" key=${i.id}>
-                  <div class="mono" style="font-size:13px;color:#3F4650">${i.id}</div>
-                  <div>${this.renderVote(i)}</div>
-                  <div style="min-width:0">
-                    <button type="button" class="rowbtn" onClick=${() => this.setState({ selId: i.id })}>${i.title}</button>
+                <div class="tr body" role="row" key=${i.id}>
+                  <div role="cell" class="mono" style="font-size:13px;color:#3F4650">${i.id}</div>
+                  <div role="cell">${this.renderVote(i)}</div>
+                  <div role="cell" style="min-width:0">
+                    <button type="button" class="rowbtn" id=${'open-' + i.id} onClick=${() => this.openSel(i.id)}>${i.title}</button>
                     <div class="muted ellipsis" style="font-size:13px;margin-top:3px">${i.category} · ${i.description}</div>
                   </div>
-                  <div><div style="font-weight:500">${i.name}</div><div class="muted" style="font-size:13px;margin-top:2px">${fmt(i.date)}</div></div>
-                  <div style="display:flex;align-items:center;gap:10px">
+                  <div role="cell"><div style="font-weight:500">${i.name}</div><div class="muted" style="font-size:13px;margin-top:2px">${fmt(i.date)}</div></div>
+                  <div role="cell" style="display:flex;align-items:center;gap:10px">
                     <span class="mono" style="font-weight:500;width:38px">${sc === null ? '—' : sc.toFixed(1)}</span>
-                    <span class="bar"><span class=${ratio >= 0.66 ? 'sc-hi' : ratio >= 0.33 ? 'sc-mid' : 'sc-lo'} style=${'width:' + Math.round(ratio * 100) + '%'}></span></span>
+                    <span class="bar" aria-hidden="true"><span class=${ratio >= 0.66 ? 'sc-hi' : ratio >= 0.33 ? 'sc-mid' : 'sc-lo'} style=${'width:' + Math.round(ratio * 100) + '%'}></span></span>
                   </div>
-                  <div><span class=${'pill ' + (i.priority ? 'p-' + i.priority : 'p-none')}>${PRIO[i.priority] || 'Not set'}</span></div>
-                  <div style="display:flex;align-items:center;gap:8px;min-width:0">
+                  <div role="cell"><span class=${'pill ' + (i.priority ? 'p-' + i.priority : 'p-none')}>${PRIO[i.priority] || 'Not set'}</span></div>
+                  <div role="cell" style="display:flex;align-items:center;gap:8px;min-width:0">
                     <span class="avatar" aria-hidden="true" style=${'background:' + avBg(i.assignee)}>${initials(i.assignee)}</span>
                     <span class=${'ellipsis' + (i.assignee ? '' : ' muted')}>${i.assignee || 'Unassigned'}</span>
                   </div>
-                  <div><span class=${'pill s-' + i.stage}><span class="dot"></span>${STAGE[i.stage]}</span></div>
-                  <div><span class=${'pill d-' + i.decision}>${DEC[i.decision]}</span></div>
+                  <div role="cell"><span class=${'pill s-' + i.stage}><span class="dot" aria-hidden="true"></span>${STAGE[i.stage]}</span></div>
+                  <div role="cell"><span class=${'pill d-' + i.decision}>${DEC[i.decision]}</span></div>
                 </div>`;
               })}
-              ${s.loading && html`
-                <div style="padding:48px 20px;text-align:center;border-top:1px solid var(--line2)" class="muted">Loading ideas…</div>`}
-              ${!s.loading && rows.length === 0 && html`
-                <div style="padding:48px 20px;text-align:center;border-top:1px solid var(--line2)">
-                  <div style="font-weight:600;font-size:16px">No ideas match these filters</div>
-                  <div class="muted" style="font-size:14px;margin-top:6px">Try another stage, decision or search term.</div>
-                </div>`}
             </div>
+            ${s.loading && html`
+              <div role="status" style="padding:48px 20px;text-align:center;border-top:1px solid var(--line2)" class="muted">Loading ideas…</div>`}
+            ${!s.loading && rows.length === 0 && html`
+              <div role="status" style="padding:48px 20px;text-align:center;border-top:1px solid var(--line2)">
+                <div style="font-weight:600;font-size:16px">No ideas match these filters</div>
+                <div class="muted" style="font-size:14px;margin-top:6px">Try another stage, decision or search term.</div>
+              </div>`}
           </div>
-          <div class="muted" style="padding:14px 20px;border-top:1px solid var(--line2);font-size:13px">Showing ${rows.length} of ${ideas.length} ideas · ${s.sort === 'wsjf' ? 'highest WSJF first' : s.sort === 'votes' ? 'most votes first' : s.sort === 'votes_asc' ? 'fewest votes first' : 'newest first'} · one vote per idea, click again to take it back</div>
+          <div id="tbl-summary" aria-live="polite" class="muted" style="padding:14px 20px;border-top:1px solid var(--line2);font-size:13px">Showing ${rows.length} of ${ideas.length} ideas · ${s.sort === 'wsjf' ? 'highest WSJF first' : s.sort === 'votes' ? 'most votes first' : s.sort === 'votes_asc' ? 'fewest votes first' : 'newest first'} · one vote per idea, click again to take it back</div>
         </section>
       </main>`;
   }
@@ -961,8 +1016,8 @@ class App extends Component {
     const h3 = 'margin:18px 0 8px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)';
     return html`
       <div>
-        <button type="button" class="backdrop" aria-label="Close details" onClick=${() => this.setState({ selId: null })}></button>
-        <aside class="drawer" role="dialog" aria-modal="true" aria-label=${'Idea ' + i.id} tabindex="-1" ref=${(el) => { this.drawerEl = el; }}>
+        <button type="button" class="backdrop" aria-label="Close details" onClick=${() => this.closeSel()}></button>
+        <aside class="drawer" role="dialog" aria-modal="true" aria-label=${'Idea ' + i.id + ': ' + i.title} tabindex="-1" ref=${(el) => { this.drawerEl = el; }} onKeyDown=${(e) => this.trapFocus(e)}>
           <div style="padding:22px 24px;border-bottom:1px solid var(--line2);display:flex;gap:16px;align-items:flex-start;justify-content:space-between">
             <div style="min-width:0">
               <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">
@@ -974,7 +1029,7 @@ class App extends Component {
               <div class="muted" style="font-size:14px;margin-top:6px">${i.category} · submitted by ${i.name}${i.team ? ' (' + i.team + ')' : ''} on ${fmt(i.date)}</div>
               <div style="margin-top:12px">${this.renderVote(i, true)}</div>
             </div>
-            <button type="button" class="iconbtn" aria-label="Close details" onClick=${() => this.setState({ selId: null })}>${Icon.close}</button>
+            <button type="button" class="iconbtn" aria-label="Close details" onClick=${() => this.closeSel()}>${Icon.close}</button>
           </div>
 
           <div style="padding:24px;display:flex;flex-direction:column;gap:26px">
@@ -1038,20 +1093,23 @@ class App extends Component {
           </div>
 
           <div style="margin-top:auto;padding:16px 24px;border-top:1px solid var(--line2);display:flex;justify-content:flex-end">
-            <button type="button" class="btn primary" onClick=${() => this.setState({ selId: null })}>Done</button>
+            <button type="button" class="btn primary" onClick=${() => this.closeSel()}>Done</button>
           </div>
         </aside>
       </div>`;
   }
 
   render(_, s) {
+    /* while the idea panel is open, the page behind it is inert: not clickable, not focusable, hidden from screen readers */
     return html`
-      ${this.renderHeader(s.view)}
-      ${s.view === 'assistant' && this.renderAssistant()}
-      ${s.view === 'submit' && this.renderSubmit()}
-      ${s.view === 'dashboard' && this.renderDashboard()}
-      ${this.renderDrawer()}
-      <footer>Idea Hub demo · WSJF scoring · all names and ideas are fictional.</footer>`;
+      <div inert=${!!s.selId}>
+        ${this.renderHeader(s.view)}
+        ${s.view === 'assistant' && this.renderAssistant()}
+        ${s.view === 'submit' && this.renderSubmit()}
+        ${s.view === 'dashboard' && this.renderDashboard()}
+        <footer>Idea Hub demo · WSJF scoring · all names and ideas are fictional.</footer>
+      </div>
+      ${this.renderDrawer()}`;
   }
 }
 
