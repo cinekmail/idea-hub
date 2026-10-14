@@ -596,7 +596,7 @@ class App extends Component {
           </div>
           <form style="padding:12px 22px 18px;display:flex;gap:10px" onSubmit=${(e) => { e.preventDefault(); this.handleChat(this.state.chatInput); }}>
             <label for="chat-in" class="sr">Message to the idea assistant</label>
-            <input id="chat-in" class="fld" type="text" autocomplete="off" placeholder=${placeholder} value=${s.chatInput} onInput=${(e) => this.setState({ chatInput: e.target.value })} style="flex:1;min-width:0">
+            <input id="chat-in" class="fld" type="text" autocomplete="off" placeholder=${placeholder} value=${s.chatInput} onInput=${(e) => this.setState({ chatInput: e.target.value })} style="flex:1;min-width:0" />
             <button type="submit" class="btn primary">${Icon.send}Send</button>
           </form>
         </section>
@@ -645,7 +645,7 @@ class App extends Component {
           <form noValidate onSubmit=${(e) => this.submit(e)} style="display:flex;flex-direction:column;gap:22px">
             <div>
               <label class="lbl" for="f-title">Idea title <span class="req">*</span></label>
-              <input id="f-title" class=${bad('title')} type="text" maxlength="120" placeholder="e.g. Self-service VM snapshots before patching" value=${f.title} onInput=${this.setForm('title')}>
+              <input id="f-title" class=${bad('title')} type="text" maxlength="120" placeholder="e.g. Self-service VM snapshots before patching" value=${f.title} onInput=${this.setForm('title')} />
               ${err.title && html`<div class="err">Give your idea a short title.</div>`}
             </div>
             <div class="grid-auto">
@@ -678,24 +678,24 @@ class App extends Component {
             </div>
             <div>
               <label class="lbl" for="f-aff">Affected services or users</label>
-              <input id="f-aff" class="fld" type="text" placeholder="e.g. All Windows Server VMs in EU region; app owners" value=${f.affected} onInput=${this.setForm('affected')}>
+              <input id="f-aff" class="fld" type="text" placeholder="e.g. All Windows Server VMs in EU region; app owners" value=${f.affected} onInput=${this.setForm('affected')} />
             </div>
             <fieldset style="border:0;padding:0;margin:0">
               <legend class="eyebrow" style="margin-bottom:12px">Submitted by</legend>
               <div class="grid-auto">
                 <div>
                   <label class="lbl" for="f-name">Your name <span class="req">*</span></label>
-                  <input id="f-name" class=${bad('name')} type="text" autocomplete="name" value=${f.name} onInput=${this.setForm('name')}>
+                  <input id="f-name" class=${bad('name')} type="text" autocomplete="name" value=${f.name} onInput=${this.setForm('name')} />
                   ${err.name && html`<div class="err">Add your name.</div>`}
                 </div>
                 <div>
                   <label class="lbl" for="f-email">Work email <span class="req">*</span></label>
-                  <input id="f-email" class=${bad('email')} type="email" autocomplete="email" value=${f.email} onInput=${this.setForm('email')}>
+                  <input id="f-email" class=${bad('email')} type="email" autocomplete="email" value=${f.email} onInput=${this.setForm('email')} />
                   ${err.email && html`<div class="err">Enter a valid email address.</div>`}
                 </div>
                 <div>
                   <label class="lbl" for="f-team">Team / department</label>
-                  <input id="f-team" class="fld" type="text" value=${f.team} onInput=${this.setForm('team')}>
+                  <input id="f-team" class="fld" type="text" value=${f.team} onInput=${this.setForm('team')} />
                 </div>
               </div>
             </fieldset>
@@ -786,7 +786,7 @@ class App extends Component {
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
               <label style="position:relative;display:block"><span class="sr">Search ideas</span>${Icon.search}
-                <input class="fld" type="search" placeholder="Search title, ID, owner…" value=${s.q} onInput=${(e) => this.setState({ q: e.target.value })} style="width:240px;padding-left:36px">
+                <input class="fld" type="search" placeholder="Search title, ID, owner…" value=${s.q} onInput=${(e) => this.setState({ q: e.target.value })} style="width:240px;padding-left:36px" />
               </label>
               ${sel('Filter by decision', s.decFilter, (e) => this.setState({ decFilter: e.target.value }), [['all', 'All decisions'], ['pending', 'Pending'], ['approved', 'Approved'], ['hold', 'On hold'], ['rejected', 'Rejected']], 170)}
               ${sel('Filter by priority', s.prioFilter, (e) => this.setState({ prioFilter: e.target.value }), [['all', 'All priorities'], ['critical', 'Critical'], ['high', 'High'], ['medium', 'Medium'], ['low', 'Low'], ['none', 'Not set']], 160)}
