@@ -13,6 +13,7 @@ A demo web app for raising, scoring and tracking improvement ideas for an IT Hos
 - **Idea dashboard.** Summary counts, filters by stage, decision and priority, search, and sorting by newest or highest WSJF.
 - **WSJF scoring.** Each idea is scored on User/business value, Time criticality and Risk reduction/opportunity enablement (together the Cost of Delay), and on Job size, using a Fibonacci scale.
   `WSJF = Cost of Delay ÷ Job Size`
+- **Voting.** One vote per idea per browser, and clicking again takes the vote back. Vote from the dashboard, the idea panel, the assistant's status card, or by typing "vote for HS-1047" in the chat. The dashboard can sort by most votes.
 - **Triage and decision.** Priority, assigned person, stage (New → In assessment → In progress → Closed) and decision status (Pending, Approved, On hold, Rejected), with assessment notes.
 
 ## Tech
@@ -38,6 +39,10 @@ What the public key can and can't do:
 | Triage (WSJF, notes, priority, owner, stage, decision) | Yes |
 | Change an idea's text, submitter or ID, or delete an idea | No |
 | Look up your own ideas by email | Yes, through `ideas_by_email()`, which returns idea IDs only |
+| Vote, or remove your vote | Yes, through `toggle_vote()`: one vote per idea per voter ID, enforced by the database |
+| See who voted, or change vote counts directly | No |
+
+Voting doesn't require sign-in. Each browser creates a random voter ID and keeps it in `localStorage`, so someone could vote again from another browser or a private window. That's acceptable for a demo, and real sign-in can be added later.
 
 To start over, run [`supabase/reset.sql`](supabase/reset.sql) and then `setup.sql` again.
 

@@ -76,8 +76,14 @@ textarea.fld{resize:vertical;line-height:1.5}
 .kpi{padding:18px 20px;display:flex;flex-direction:column;gap:6px}
 .kpi .v{font-size:34px;font-weight:600;font-family:'IBM Plex Mono',monospace;letter-spacing:-.02em;line-height:1.1}
 .toolbar{padding:18px 20px;display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line2)}
-.tbl{min-width:1180px}
-.tr{display:grid;grid-template-columns:96px minmax(260px,2.4fr) 170px 130px 110px 170px 140px 130px;gap:16px;padding:16px 20px;align-items:center;font-size:14px}
+.tbl{min-width:1280px}
+.tr{display:grid;grid-template-columns:84px 84px minmax(260px,2.4fr) 170px 130px 110px 170px 140px 130px;gap:16px;padding:16px 20px;align-items:center;font-size:14px}
+.vote{min-height:44px;min-width:64px;padding:0 12px;border:1px solid #C9CFD6;border-radius:999px;background:#fff;color:#2E3A46;font-size:14px;font-weight:600;font-family:'IBM Plex Mono',monospace;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.vote:hover{border-color:var(--accent);color:var(--accent)}
+.vote.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.vote.on:hover{background:var(--accent-dark);color:#fff}
+.vote[disabled]{opacity:.65;cursor:progress}
+.vote .word{font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500}
 .tr.head{padding:12px 20px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
 .tr.body{border-top:1px solid var(--line2)}
 .tr.body:hover{background:var(--soft)}
@@ -159,6 +165,8 @@ const wsjf = (i) => { const c = cod(i); return (c === null || !i.js) ? null : Ma
 
 const emptyForm = () => ({ title: '', category: '', urgency: 'medium', description: '', benefit: '', affected: '', name: '', email: '', team: '' });
 
+const SEED_VOTES = { 'HS-1042': 4, 'HS-1043': 12, 'HS-1044': 7, 'HS-1045': 9, 'HS-1046': 3, 'HS-1047': 2, 'HS-1048': 1 };
+
 const seed = () => [
   { id: 'HS-1048', title: 'Bare-metal hosting option for GPU workloads', category: 'Compute & VMs', urgency: 'medium', description: 'Offer dedicated bare-metal hosts with GPUs for teams running model training, instead of them buying their own hardware.', benefit: 'Keeps GPU workloads inside managed hosting with standard patching and monitoring.', affected: 'Data science teams', name: 'Jakub Mazur', email: 'jakub.mazur@example.com', team: 'Analytics', date: '2026-10-09', bv: 5, tc: 2, rr: 3, js: 20, notes: 'Capacity and power constraints in current DC. Revisit with the cloud GPU offering.', priority: 'low', assignee: 'Tomasz Lewandowski', stage: 'closed', decision: 'rejected' },
   { id: 'HS-1047', title: 'Storage tiering for cold backup data', category: 'Storage & Backup', urgency: 'medium', description: 'Automatically move backups older than 90 days to a cheaper archive tier while keeping restore SLAs for recent data.', benefit: 'Lower storage cost for long-retention backups.', affected: 'All backup policies', name: 'Ewa Krawczyk', email: 'ewa.krawczyk@example.com', team: 'Finance IT', date: '2026-10-08', bv: null, tc: null, rr: null, js: null, notes: '', priority: '', assignee: '', stage: 'new', decision: 'pending' },
@@ -167,7 +175,7 @@ const seed = () => [
   { id: 'HS-1044', title: 'Unified monitoring dashboards for hosted applications', category: 'Monitoring & Alerting', urgency: 'medium', description: 'One standard dashboard per hosted application showing availability, CPU, memory, disk and recent alerts.', benefit: 'Faster triage; app owners self-serve status instead of raising tickets.', affected: 'App owners, Service Desk', name: 'Paweł Szymański', email: 'pawel.szymanski@example.com', team: 'Service Desk', date: '2026-09-24', bv: 8, tc: 5, rr: 8, js: 5, notes: 'Approved at CAB. Template built on existing monitoring stack.', priority: 'medium', assignee: 'Katarzyna Zielińska', stage: 'progress', decision: 'approved' },
   { id: 'HS-1043', title: 'Self-service VM provisioning from the service catalogue', category: 'Automation & Self-service', urgency: 'high', description: 'Standard VM sizes orderable from the service catalogue, built automatically with baseline hardening, backup and monitoring.', benefit: 'Provisioning time from days to under an hour.', affected: 'All requesting teams', name: 'Anna Nowak', email: 'anna.nowak@example.com', team: 'Hosting Services', date: '2026-09-15', bv: 20, tc: 13, rr: 8, js: 13, notes: 'Phase 1: Windows and Linux standard sizes only.', priority: 'critical', assignee: 'Anna Nowak', stage: 'progress', decision: 'approved' },
   { id: 'HS-1042', title: 'Self-service DNS record requests', category: 'Network & DNS', urgency: 'low', description: 'Form-driven A/CNAME record creation for internal zones with automatic validation and approval by zone owner.', benefit: 'Removes a frequent manual ticket type.', affected: 'Internal DNS zones', name: 'Tomasz Lewandowski', email: 'tomasz.lewandowski@example.com', team: 'Network', date: '2026-09-03', bv: 5, tc: 2, rr: 2, js: 2, notes: 'Delivered 2026-10-01.', priority: 'low', assignee: 'Tomasz Lewandowski', stage: 'closed', decision: 'approved' }
-];
+].map((i) => Object.assign(i, { votes: SEED_VOTES[i.id] || 0 }));
 
 /* ------------------------------------------------------------------ */
 /* Storage — swap this for Supabase later; the rest of the app stays.  */
@@ -183,11 +191,28 @@ const store = {
     } catch (e) { return null; }
   },
   save(d) { try { localStorage.setItem(LS_KEY, JSON.stringify(d)); } catch (e) { /* storage unavailable: keep working in memory */ } },
-  clear() { try { localStorage.removeItem(LS_KEY); } catch (e) { /* ignore */ } }
+  clear() { try { localStorage.removeItem(LS_KEY); localStorage.removeItem(VOTES_KEY); } catch (e) { /* ignore */ } },
+  /* browser-only mode: which ideas this browser has voted for */
+  loadVotes() { try { return JSON.parse(localStorage.getItem(VOTES_KEY) || '{}') || {}; } catch (e) { return {}; } },
+  saveVotes(v) { try { localStorage.setItem(VOTES_KEY, JSON.stringify(v)); } catch (e) { /* ignore */ } }
 };
 
+/* Voting: each browser gets a random, anonymous voter ID (no sign-in).
+   The database allows one vote per idea per voter ID; voting again removes the vote. */
+const VOTER_KEY = 'ideahub.voter.v1';
+const VOTES_KEY = 'ideahub.myvotes.v1';
+const newUuid = () => (window.crypto && window.crypto.randomUUID) ? window.crypto.randomUUID()
+  : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16); });
+const voterId = (() => {
+  try {
+    let v = localStorage.getItem(VOTER_KEY);
+    if (!v) { v = newUuid(); localStorage.setItem(VOTER_KEY, v); }
+    return v;
+  } catch (e) { return newUuid(); } /* storage blocked: votes still work for this visit */
+})();
+
 /* Supabase REST API (PostgREST). Email is never read back: the public key can't see that column. */
-const COLS = 'id,title,category,urgency,description,benefit,affected,name,team,bv,tc,rr,js,notes,priority,assignee,stage,decision,created_at';
+const COLS = 'id,title,category,urgency,description,benefit,affected,name,team,bv,tc,rr,js,notes,priority,assignee,stage,decision,votes,created_at';
 const api = {
   async req(path, opts) {
     const o = opts || {};
@@ -214,17 +239,24 @@ const api = {
     return rows[0];
   },
   update(id, patch) { return this.req('ideas?id=eq.' + encodeURIComponent(id), { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(patch) }); },
-  byEmail(email) { return this.req('rpc/ideas_by_email', { method: 'POST', body: JSON.stringify({ p_email: email }) }); }
+  byEmail(email) { return this.req('rpc/ideas_by_email', { method: 'POST', body: JSON.stringify({ p_email: email }) }); },
+  toggleVote(id) { return this.req('rpc/toggle_vote', { method: 'POST', body: JSON.stringify({ p_idea_id: id, p_voter_id: voterId }) }); },
+  myVotes() { return this.req('rpc/my_votes', { method: 'POST', body: JSON.stringify({ p_voter_id: voterId }) }); }
 };
 const fromRow = (r) => Object.assign({}, r, { email: '', date: String(r.created_at).slice(0, 10) });
 const friendlyError = (e) => {
   const m = String((e && e.message) || '');
   if (/IDEA_LIMIT_REACHED/.test(m)) return 'The demo is full — it holds at most ' + MAX_IDEAS + ' ideas.';
+  if (/VOTE_LIMIT_REACHED/.test(m)) return 'The demo has reached its vote limit, so new votes can\'t be added.';
+  if (/IDEA_NOT_FOUND/.test(m)) return 'That idea no longer exists.';
   if (e instanceof TypeError || /fetch|network/i.test(m)) return 'Can\'t reach the database right now. Please try again in a moment.';
   return 'The database refused that change (' + m + ').';
 };
 
 const greeting = () => ({ id: 1, from: 'bot', text: 'Hi! I\'m the Hosting Services idea assistant.\n\nI can help you raise a new idea, or check the status of an idea you\'ve already submitted. What would you like to do?', cardId: null });
+
+/* Thumbs-up icon: a function so each button gets its own copy */
+const thumbIcon = () => html`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>`;
 
 /* Small inline icons (stroke, currentColor) */
 const Icon = {
@@ -252,6 +284,7 @@ class App extends Component {
       ideas: REMOTE ? [] : (saved ? saved.ideas : seed()),
       nextNum: saved ? saved.nextNum : FIRST_NUM,
       loading: REMOTE, error: '',
+      myVotes: REMOTE ? {} : store.loadVotes(), votePending: {},
       chat: [greeting()], chatInput: '', typing: false, flow: null, chatChips: null, lastEmail: ''
     };
     this.mid = 100;
@@ -278,8 +311,10 @@ class App extends Component {
   async reload() {
     if (!REMOTE) return;
     try {
-      const rows = await api.list();
-      this.setState({ ideas: rows.map(fromRow), loading: false, error: '' });
+      const res = await Promise.all([api.list(), api.myVotes().catch(() => null)]);
+      const upd = { ideas: res[0].map(fromRow), loading: false, error: '' };
+      if (res[1]) { const mv = {}; res[1].forEach((id) => { mv[id] = true; }); upd.myVotes = mv; }
+      this.setState(upd);
     } catch (e) {
       this.setState({ loading: false, error: friendlyError(e) });
     }
@@ -299,7 +334,7 @@ class App extends Component {
       return idea.id;
     }
     const id = 'HS-' + this.state.nextNum;
-    const idea = Object.assign(row, { id, date: today(), bv: null, tc: null, rr: null, js: null, notes: '', priority: '', assignee: '', stage: 'new', decision: 'pending' });
+    const idea = Object.assign(row, { id, date: today(), bv: null, tc: null, rr: null, js: null, notes: '', priority: '', assignee: '', stage: 'new', decision: 'pending', votes: 0 });
     this.setState({ ideas: [idea].concat(this.state.ideas), nextNum: this.state.nextNum + 1 });
     return id;
   }
@@ -319,11 +354,50 @@ class App extends Component {
     }, key === 'notes' ? 700 : 0);
   }
 
+  /* Vote, or remove this browser's vote. Updates the screen at once, then confirms with the database. */
+  async toggleVote(id) {
+    if (this.state.votePending[id]) return;
+    const had = !!this.state.myVotes[id];
+    const before = (this.state.ideas.find((x) => x.id === id) || {}).votes || 0;
+    const apply = (voted, votes) => {
+      const mv = Object.assign({}, this.state.myVotes);
+      if (voted) mv[id] = true; else delete mv[id];
+      this.setState({ myVotes: mv, ideas: this.state.ideas.map((x) => x.id === id ? Object.assign({}, x, { votes }) : x) });
+      return mv;
+    };
+    const mv = apply(!had, Math.max(0, before + (had ? -1 : 1)));
+    if (!REMOTE) { store.saveVotes(mv); return; }
+    this.setState({ votePending: Object.assign({}, this.state.votePending, { [id]: true }) });
+    try {
+      const r = await api.toggleVote(id);
+      apply(!!r.voted, r.votes);
+    } catch (e) {
+      apply(had, before);
+      this.setState({ error: friendlyError(e) });
+    } finally {
+      const p = Object.assign({}, this.state.votePending);
+      delete p[id];
+      this.setState({ votePending: p });
+    }
+  }
+
+  renderVote(i, withWord) {
+    const on = !!this.state.myVotes[i.id];
+    const n = i.votes || 0;
+    return html`
+      <button type="button" class=${'vote' + (on ? ' on' : '')} aria-pressed=${on ? 'true' : 'false'} disabled=${!!this.state.votePending[i.id]}
+        title=${on ? 'You voted for this idea. Click to remove your vote.' : 'Vote for this idea'}
+        aria-label=${(on ? 'Remove your vote from ' : 'Vote for ') + i.id + ', ' + n + (n === 1 ? ' vote' : ' votes')}
+        onClick=${() => this.toggleVote(i.id)}>
+        ${thumbIcon()}<span>${n}</span>${withWord && html`<span class="word">${on ? 'Voted' : 'Vote'}</span>`}
+      </button>`;
+  }
+
   resetDemo() {
     if (!window.confirm('Reset the demo? This removes ideas you added and restores the sample data.')) return;
     store.clear();
     clearTimeout(this.chatTimer);
-    this.setState({ ideas: seed(), nextNum: FIRST_NUM, selId: null, lastId: null, chat: [greeting()], flow: null, chatChips: null, typing: false, lastEmail: '' });
+    this.setState({ myVotes: {}, ideas: seed(), nextNum: FIRST_NUM, selId: null, lastId: null, chat: [greeting()], flow: null, chatChips: null, typing: false, lastEmail: '' });
   }
 
   /* ---------- form ---------- */
@@ -462,6 +536,21 @@ class App extends Component {
       else say('I need an idea ID like HS-1043, or the email address you used when submitting. Type “cancel” to go back.');
     } else if (/wsjf|score|prioriti/.test(low)) {
       say('WSJF (Weighted Shortest Job First) ranks ideas by Cost of Delay ÷ Job Size.\n\nCost of Delay = User/business value + Time criticality + Risk reduction/opportunity enablement, each scored relative to other ideas on a 1–20 Fibonacci scale. Job Size is the relative effort to deliver.\n\nA valuable, urgent, small job gets the highest score and is picked up first.');
+    } else if (/\b(vote|upvote|support|like)\b/.test(low) && idMatch) {
+      const id = 'HS-' + idMatch[1];
+      if (!this.state.ideas.find((x) => x.id === id)) {
+        say('I couldn\'t find an idea with ID ' + id + '.');
+      } else if (this.state.myVotes[id]) {
+        say('You\'ve already voted for ' + id + ' — each idea gets one vote per person. To take your vote back, click the highlighted vote button.', id);
+      } else {
+        await this.toggleVote(id);
+        if (this.state.myVotes[id]) {
+          const n = (this.state.ideas.find((x) => x.id === id) || {}).votes || 0;
+          say('Thanks — your vote for ' + id + ' is in. It now has ' + n + (n === 1 ? ' vote.' : ' votes.'), id);
+        } else {
+          say('Sorry, I couldn\'t record your vote. ' + (this.state.error || 'Please try again.'));
+        }
+      }
     } else if (idMatch || emailMatch || /status|check|track|progress|where|my ideas?\b/.test(low)) {
       if (!(await findStatus())) { flow = { mode: 'status' }; say('Sure — give me the idea ID (for example HS-1043) or the email address you submitted it with.'); }
     } else if (/idea|raise|submit|new|propose|suggest/.test(low)) {
@@ -540,7 +629,10 @@ class App extends Component {
           ${cell('Submitted', fmt(i.date))}
         </div>
         ${i.notes && html`<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line2);font-size:14px;line-height:1.5"><span class="muted">Team note: </span>${i.notes}</div>`}
-        <button type="button" class="btn ghost sm" style="margin-top:14px" onClick=${() => this.openIdea(i.id)}>Open in dashboard</button>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:14px">
+          ${this.renderVote(i, true)}
+          <button type="button" class="btn ghost sm" onClick=${() => this.openIdea(i.id)}>Open in dashboard</button>
+        </div>
       </div>`;
   }
 
@@ -558,7 +650,7 @@ class App extends Component {
     else qr = ['Cancel'];
     const PH = { title: 'Type a short title…', category: 'Pick a service area or type one…', description: 'Describe your idea…', benefit: 'Describe the benefit, or type “skip”…', urgency: 'Low, medium or high…', name: 'Your name…', email: 'name@company.com', confirm: 'Type “submit” to send…' };
     const placeholder = !fl ? 'Ask about an idea, e.g. “status of HS-1045”' : fl.mode === 'status' ? 'Idea ID or email address…' : PH[fl.step];
-    const examples = ['I have an idea to automate SSL certificate renewals', 'What is the status of HS-1045?', 'Show ideas for anna.nowak@example.com', 'How does WSJF work?'];
+    const examples = ['I have an idea to automate SSL certificate renewals', 'What is the status of HS-1045?', 'Vote for HS-1047', 'How does WSJF work?'];
 
     return html`
       <main class="wrap row">
@@ -614,6 +706,7 @@ class App extends Component {
               <li>Raising an idea asks the same questions as the form, one at a time. Type “cancel” at any point.</li>
               <li>Ideas raised here appear on the dashboard straight away as New / Pending.</li>
               <li>Check status by idea ID (e.g. HS-1045) or by the email you submitted with.</li>
+              <li>Vote for ideas you'd like to see: one vote per idea, and clicking again takes it back.</li>
             </ul>
           </div>
         </aside>
@@ -743,6 +836,10 @@ class App extends Component {
       (s.prioFilter === 'all' || (s.prioFilter === 'none' ? !i.priority : i.priority === s.prioFilter)) &&
       (!q || (i.id + ' ' + i.title + ' ' + i.category + ' ' + i.assignee + ' ' + i.name).toLowerCase().indexOf(q) !== -1)
     ).sort((a, b) => {
+      if (s.sort === 'votes') {
+        const dv = (b.votes || 0) - (a.votes || 0);
+        if (dv) return dv;
+      }
       if (s.sort === 'wsjf') {
         const x = wsjf(a), y = wsjf(b);
         if (x !== y) return y === null ? -1 : x === null ? 1 : y - x;
@@ -790,19 +887,20 @@ class App extends Component {
               </label>
               ${sel('Filter by decision', s.decFilter, (e) => this.setState({ decFilter: e.target.value }), [['all', 'All decisions'], ['pending', 'Pending'], ['approved', 'Approved'], ['hold', 'On hold'], ['rejected', 'Rejected']], 170)}
               ${sel('Filter by priority', s.prioFilter, (e) => this.setState({ prioFilter: e.target.value }), [['all', 'All priorities'], ['critical', 'Critical'], ['high', 'High'], ['medium', 'Medium'], ['low', 'Low'], ['none', 'Not set']], 160)}
-              ${sel('Sort ideas', s.sort, (e) => this.setState({ sort: e.target.value }), [['newest', 'Sort: newest first'], ['wsjf', 'Sort: highest WSJF']], 190)}
+              ${sel('Sort ideas', s.sort, (e) => this.setState({ sort: e.target.value }), [['newest', 'Sort: newest first'], ['wsjf', 'Sort: highest WSJF'], ['votes', 'Sort: most votes']], 190)}
             </div>
           </div>
 
           <div style="overflow-x:auto">
             <div class="tbl">
-              <div class="tr head"><div>ID</div><div>Idea</div><div>Submitted</div><div>WSJF</div><div>Priority</div><div>Assigned to</div><div>Stage</div><div>Decision</div></div>
+              <div class="tr head"><div>ID</div><div>Votes</div><div>Idea</div><div>Submitted</div><div>WSJF</div><div>Priority</div><div>Assigned to</div><div>Stage</div><div>Decision</div></div>
               ${rows.map((i) => {
                 const sc = wsjf(i);
                 const ratio = sc === null ? 0 : sc / maxW;
                 return html`
                 <div class="tr body" key=${i.id}>
                   <div class="mono" style="font-size:13px;color:#3F4650">${i.id}</div>
+                  <div>${this.renderVote(i)}</div>
                   <div style="min-width:0">
                     <button type="button" class="rowbtn" onClick=${() => this.setState({ selId: i.id })}>${i.title}</button>
                     <div class="muted ellipsis" style="font-size:13px;margin-top:3px">${i.category} · ${i.description}</div>
@@ -830,7 +928,7 @@ class App extends Component {
                 </div>`}
             </div>
           </div>
-          <div class="muted" style="padding:14px 20px;border-top:1px solid var(--line2);font-size:13px">Showing ${rows.length} of ${ideas.length} ideas · ${s.sort === 'wsjf' ? 'highest WSJF first' : 'newest first'}</div>
+          <div class="muted" style="padding:14px 20px;border-top:1px solid var(--line2);font-size:13px">Showing ${rows.length} of ${ideas.length} ideas · ${s.sort === 'wsjf' ? 'highest WSJF first' : s.sort === 'votes' ? 'most votes first' : 'newest first'} · one vote per idea, click again to take it back</div>
         </section>
       </main>`;
   }
@@ -863,6 +961,7 @@ class App extends Component {
               </div>
               <h2 style="margin:0;font-size:21px;font-weight:700;line-height:1.3">${i.title}</h2>
               <div class="muted" style="font-size:14px;margin-top:6px">${i.category} · submitted by ${i.name}${i.team ? ' (' + i.team + ')' : ''} on ${fmt(i.date)}</div>
+              <div style="margin-top:12px">${this.renderVote(i, true)}</div>
             </div>
             <button type="button" class="iconbtn" aria-label="Close details" onClick=${() => this.setState({ selId: null })}>${Icon.close}</button>
           </div>

@@ -12,6 +12,9 @@
 --       - nobody can delete or change an idea's ID, text or submitter
 --   • ideas_by_email(): lets the assistant find a person's ideas by email
 --     without exposing the email column
+--   • voting: one vote per idea per browser (toggle_vote / my_votes)
+--
+-- Safe to re-run: it only adds what is missing and keeps existing ideas.
 --   • the 7 sample ideas
 -- =====================================================================
 
@@ -42,11 +45,27 @@ create table if not exists public.ideas (
   assignee    text not null default '' check (char_length(assignee) <= 80),
   stage       text not null default 'new' check (stage in ('new', 'assessment', 'progress', 'closed')),
   decision    text not null default 'pending' check (decision in ('pending', 'approved', 'hold', 'rejected')),
+  votes       integer not null default 0 check (votes >= 0),
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()
 );
 
 alter sequence public.idea_number_seq owned by public.ideas.id;
+
+-- Added with voting; harmless if the column already exists
+alter table public.ideas add column if not exists votes integer not null default 0 check (votes >= 0);
+
+-- ---------- Votes: one per idea per voter ----------------------------
+-- voter_id is a random ID each browser creates for itself (no sign-in).
+-- The primary key makes a second vote from the same voter impossible.
+create table if not exists public.idea_votes (
+  idea_id    text not null references public.ideas (id) on delete cascade,
+  voter_id   uuid not null,
+  created_at timestamptz not null default now(),
+  primary key (idea_id, voter_id)
+);
+
+create index if not exists idea_votes_voter_idx on public.idea_votes (voter_id);
 
 -- ---------- 100-idea limit -------------------------------------------
 create or replace function public.ideas_enforce_cap()
@@ -92,8 +111,12 @@ revoke all on public.ideas from anon, authenticated;
 
 -- Read everything except email
 grant select (id, title, category, urgency, description, benefit, affected, name, team,
-              bv, tc, rr, js, notes, priority, assignee, stage, decision, created_at, updated_at)
+              bv, tc, rr, js, notes, priority, assignee, stage, decision, votes, created_at, updated_at)
   on public.ideas to anon, authenticated;
+
+-- Votes are only changed through toggle_vote() below, never directly
+alter table public.idea_votes enable row level security;
+revoke all on public.idea_votes from anon, authenticated;
 
 -- Triage: assessment and decision fields only
 grant update (bv, tc, rr, js, notes, priority, assignee, stage, decision)
@@ -137,6 +160,62 @@ $$;
 
 revoke all on function public.submit_idea(text, text, text, text, text, text, text, text, text) from public;
 grant execute on function public.submit_idea(text, text, text, text, text, text, text, text, text) to anon, authenticated;
+
+-- ---------- Vote / remove vote ---------------------------------------
+-- Toggles this voter's vote on an idea and returns {"voted": bool, "votes": int}.
+create or replace function public.toggle_vote(p_idea_id text, p_voter_id uuid)
+returns json
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_voted boolean;
+  v_votes integer;
+begin
+  if p_voter_id is null then
+    raise exception 'VOTER_REQUIRED';
+  end if;
+
+  -- lock the idea row so simultaneous clicks are counted correctly
+  perform 1 from public.ideas where id = p_idea_id for update;
+  if not found then
+    raise exception 'IDEA_NOT_FOUND';
+  end if;
+
+  delete from public.idea_votes where idea_id = p_idea_id and voter_id = p_voter_id;
+  if found then
+    update public.ideas set votes = greatest(votes - 1, 0) where id = p_idea_id returning votes into v_votes;
+    v_voted := false;
+  else
+    if (select count(*) from public.idea_votes) >= 5000 then
+      raise exception 'VOTE_LIMIT_REACHED: this demo holds at most 5000 votes';
+    end if;
+    insert into public.idea_votes (idea_id, voter_id) values (p_idea_id, p_voter_id);
+    update public.ideas set votes = votes + 1 where id = p_idea_id returning votes into v_votes;
+    v_voted := true;
+  end if;
+
+  return json_build_object('voted', v_voted, 'votes', v_votes);
+end;
+$$;
+
+revoke all on function public.toggle_vote(text, uuid) from public;
+grant execute on function public.toggle_vote(text, uuid) to anon, authenticated;
+
+-- Which ideas has this voter voted for? (so the buttons show the right state)
+create or replace function public.my_votes(p_voter_id uuid)
+returns setof text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select idea_id from public.idea_votes where voter_id = p_voter_id;
+$$;
+
+revoke all on function public.my_votes(uuid) from public;
+grant execute on function public.my_votes(uuid) to anon, authenticated;
 
 -- ---------- Look up ideas by submitter email -------------------------
 create or replace function public.ideas_by_email(p_email text)
@@ -197,6 +276,15 @@ values
    'Jakub Mazur', 'jakub.mazur@example.com', 'Analytics',
    5, 2, 3, 20, 'Capacity and power constraints in current DC. Revisit with the cloud GPU offering.', 'low', 'Tomasz Lewandowski', 'closed', 'rejected', '2026-10-09 09:00+02')
 on conflict (id) do nothing;
+
+-- Starting vote counts for the sample ideas (only where nobody has voted yet)
+update public.ideas as i
+set votes = v.n
+from (values ('HS-1042', 4), ('HS-1043', 12), ('HS-1044', 7), ('HS-1045', 9),
+             ('HS-1046', 3), ('HS-1047', 2), ('HS-1048', 1)) as v (id, n)
+where i.id = v.id
+  and i.votes = 0
+  and not exists (select 1 from public.idea_votes w where w.idea_id = i.id);
 
 -- Quick check: should return 7
 select count(*) as ideas_in_database from public.ideas;
