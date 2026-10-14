@@ -84,6 +84,10 @@ textarea.fld{resize:vertical;line-height:1.5}
 .vote.on:hover{background:var(--accent-dark);color:#fff}
 .vote[disabled]{opacity:.65;cursor:progress}
 .vote .word{font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500}
+.thbtn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 6px;margin-left:-6px;border-radius:6px;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit}
+.thbtn:hover{background:#E9EDF1;color:var(--ink)}
+.thbtn.on{color:var(--accent)}
+.thbtn:focus-visible{outline:2px solid var(--accent)}
 .tr.head{padding:12px 20px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
 .tr.body{border-top:1px solid var(--line2)}
 .tr.body:hover{background:var(--soft)}
@@ -836,9 +840,9 @@ class App extends Component {
       (s.prioFilter === 'all' || (s.prioFilter === 'none' ? !i.priority : i.priority === s.prioFilter)) &&
       (!q || (i.id + ' ' + i.title + ' ' + i.category + ' ' + i.assignee + ' ' + i.name).toLowerCase().indexOf(q) !== -1)
     ).sort((a, b) => {
-      if (s.sort === 'votes') {
+      if (s.sort === 'votes' || s.sort === 'votes_asc') {
         const dv = (b.votes || 0) - (a.votes || 0);
-        if (dv) return dv;
+        if (dv) return s.sort === 'votes' ? dv : -dv;
       }
       if (s.sort === 'wsjf') {
         const x = wsjf(a), y = wsjf(b);
@@ -887,13 +891,20 @@ class App extends Component {
               </label>
               ${sel('Filter by decision', s.decFilter, (e) => this.setState({ decFilter: e.target.value }), [['all', 'All decisions'], ['pending', 'Pending'], ['approved', 'Approved'], ['hold', 'On hold'], ['rejected', 'Rejected']], 170)}
               ${sel('Filter by priority', s.prioFilter, (e) => this.setState({ prioFilter: e.target.value }), [['all', 'All priorities'], ['critical', 'Critical'], ['high', 'High'], ['medium', 'Medium'], ['low', 'Low'], ['none', 'Not set']], 160)}
-              ${sel('Sort ideas', s.sort, (e) => this.setState({ sort: e.target.value }), [['newest', 'Sort: newest first'], ['wsjf', 'Sort: highest WSJF'], ['votes', 'Sort: most votes']], 190)}
+              ${sel('Sort ideas', s.sort, (e) => this.setState({ sort: e.target.value }), [['newest', 'Sort: newest first'], ['wsjf', 'Sort: highest WSJF'], ['votes', 'Sort: most votes'], ['votes_asc', 'Sort: fewest votes']], 190)}
             </div>
           </div>
 
           <div style="overflow-x:auto">
             <div class="tbl">
-              <div class="tr head"><div>ID</div><div>Votes</div><div>Idea</div><div>Submitted</div><div>WSJF</div><div>Priority</div><div>Assigned to</div><div>Stage</div><div>Decision</div></div>
+              <div class="tr head"><div>ID</div>
+                <div aria-sort=${s.sort === 'votes' ? 'descending' : s.sort === 'votes_asc' ? 'ascending' : 'none'}>
+                  <button type="button" class=${'thbtn' + (s.sort === 'votes' || s.sort === 'votes_asc' ? ' on' : '')}
+                    title=${s.sort === 'votes' ? 'Sorted by most votes. Click for fewest votes first.' : 'Sort by most votes'}
+                    onClick=${() => this.setState({ sort: s.sort === 'votes' ? 'votes_asc' : 'votes' })}>
+                    Votes <span aria-hidden="true">${s.sort === 'votes' ? '↓' : s.sort === 'votes_asc' ? '↑' : '↕'}</span>
+                  </button>
+                </div><div>Idea</div><div>Submitted</div><div>WSJF</div><div>Priority</div><div>Assigned to</div><div>Stage</div><div>Decision</div></div>
               ${rows.map((i) => {
                 const sc = wsjf(i);
                 const ratio = sc === null ? 0 : sc / maxW;
@@ -928,7 +939,7 @@ class App extends Component {
                 </div>`}
             </div>
           </div>
-          <div class="muted" style="padding:14px 20px;border-top:1px solid var(--line2);font-size:13px">Showing ${rows.length} of ${ideas.length} ideas · ${s.sort === 'wsjf' ? 'highest WSJF first' : s.sort === 'votes' ? 'most votes first' : 'newest first'} · one vote per idea, click again to take it back</div>
+          <div class="muted" style="padding:14px 20px;border-top:1px solid var(--line2);font-size:13px">Showing ${rows.length} of ${ideas.length} ideas · ${s.sort === 'wsjf' ? 'highest WSJF first' : s.sort === 'votes' ? 'most votes first' : s.sort === 'votes_asc' ? 'fewest votes first' : 'newest first'} · one vote per idea, click again to take it back</div>
         </section>
       </main>`;
   }
