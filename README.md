@@ -14,6 +14,7 @@ A demo web app for raising, scoring and tracking improvement ideas for an IT Hos
 - **WSJF scoring.** Each idea is scored on User/business value, Time criticality and Risk reduction/opportunity enablement (together the Cost of Delay), and on Job size, using a Fibonacci scale.
   `WSJF = Cost of Delay ÷ Job Size`
 - **Voting.** One vote per idea per browser, and clicking again takes the vote back. Vote from the dashboard, the idea panel, the assistant's status card, or by typing "vote for HS-1047" in the chat. The dashboard can sort by most votes.
+- **About the author.** Who built the demo and why, with a link to LinkedIn.
 - **Triage and decision.** Priority, assigned person, stage (New → In assessment → In progress → Closed) and decision status (Pending, Approved, On hold, Rejected), with assessment notes.
 
 ## Tech
