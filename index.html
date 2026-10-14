@@ -53,7 +53,8 @@ textarea.fld{resize:vertical;line-height:1.5}
 /* buttons, chips, pills */
 .btn{min-height:44px;padding:0 20px;border-radius:8px;border:1px solid transparent;font-size:15px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .btn.primary{background:var(--accent);color:#fff}
-.btn.primary:hover{background:var(--accent-dark)}
+.btn.primary:hover{background:var(--accent-dark);color:#fff}
+a.btn.primary,a.btn.primary:visited{color:#fff}
 .btn.ghost{background:#fff;color:var(--ink);border-color:#C9CFD6}
 .btn.ghost:hover{border-color:#8A96A3}
 .btn.sm{min-height:38px;font-size:14px;padding:0 14px}
@@ -326,7 +327,7 @@ class App extends Component {
   componentDidMount() { document.addEventListener('keydown', this.onKey); this.reload(); this.updateTitle(); }
 
   updateTitle() {
-    const names = { assistant: 'Idea assistant', submit: 'Submit an idea', dashboard: 'Idea dashboard' };
+    const names = { assistant: 'Idea assistant', submit: 'Submit an idea', dashboard: 'Idea dashboard', about: 'About the author' };
     document.title = (names[this.state.view] || 'Idea Hub') + ' · Idea Hub';
   }
   componentWillUnmount() { document.removeEventListener('keydown', this.onKey); clearTimeout(this.chatTimer); }
@@ -646,6 +647,7 @@ class App extends Component {
             ${tab('assistant', 'Idea assistant', Icon.chat)}
             ${tab('submit', 'Submit an idea')}
             ${tab('dashboard', html`Idea dashboard <span class="mono" style="font-size:13px;opacity:.75">${this.state.ideas.length}</span>`)}
+            ${tab('about', 'About the author')}
           </nav>
         </div>
       </header>
@@ -663,6 +665,56 @@ class App extends Component {
           <span>${this.state.error}</span>
           <button type="button" class="linkbtn" onClick=${() => this.reload()}>Try again</button>
         </div></div>`}`;
+  }
+
+  renderAbout() {
+    const linkedIn = 'https://www.linkedin.com/in/marcin-or%C5%82owski-0bb625134';
+    const step = (day, title, text) => html`
+      <li style="display:flex;gap:14px">
+        <span class="pill s-progress" style="height:26px;flex:none;font-family:'IBM Plex Mono',monospace">${day}</span>
+        <div><div style="font-weight:600;font-size:15px">${title}</div><div class="muted" style="font-size:14px;line-height:1.5;margin-top:2px">${text}</div></div>
+      </li>`;
+    return html`
+      <main class="wrap row" id="main" tabindex="-1">
+        <section class="card main-col" style="padding:32px">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:20px;margin-bottom:24px">
+            <div aria-hidden="true" style="width:72px;height:72px;border-radius:50%;background:var(--accent);color:#fff;font-size:26px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none">MO</div>
+            <div>
+              <h1 class="title">About the author</h1>
+              <p style="margin:6px 0 0;font-size:17px;font-weight:600">Marcin Orłowski</p>
+              <p class="muted" style="margin:2px 0 0;font-size:15px">IT Product Manager · AI enthusiast</p>
+            </div>
+          </div>
+          <div style="font-size:16px;line-height:1.65;max-width:68ch">
+            <p style="margin:0 0 16px">I'm an IT Product Manager and an AI enthusiast. I'm learning to use AI as a practical tool: not as a goal in itself, but as a way to deliver real value to customers, very quickly.</p>
+            <p style="margin:0 0 16px">Idea Hub is one of those experiments. It started as a request for a simple idea form and dashboard, and grew into a working app with WSJF prioritisation, a guided idea assistant, a shared database, voting and accessibility improvements, built together with Claude in two days.</p>
+            <p style="margin:0">I'm always happy to talk about product management, delivering value faster, and how AI can help teams get there.</p>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:28px;padding-top:24px;border-top:1px solid var(--line2)">
+            <a class="btn primary" href=${linkedIn} target="_blank" rel="noopener noreferrer" style="text-decoration:none">
+              Connect on LinkedIn
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+              <span class="sr">(opens in a new tab)</span>
+            </a>
+            <button type="button" class="btn ghost" onClick=${() => this.setState({ view: 'assistant' })}>Try the idea assistant</button>
+          </div>
+        </section>
+
+        <aside class="side-col">
+          <div class="card" style="padding:24px">
+            <h2 style="margin:0 0 18px;font-size:17px;font-weight:700">How this demo was built</h2>
+            <ol style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:18px">
+              ${step('Day 1', 'From idea to clickable prototype', 'Submission form, tracking dashboard, WSJF scoring and a guided idea assistant.')}
+              ${step('Day 1', 'Live on the internet', 'Published as a single page on GitHub Pages at no cost.')}
+              ${step('Day 2', 'Real data and voting', 'Shared Supabase database with access rules, a 100-idea limit, and one vote per idea.')}
+              ${step('Day 2', 'Accessibility', 'Checked against WCAG 2.2 AA and fixed: keyboard focus, screen reader labels, form errors.')}
+            </ol>
+          </div>
+          <div style="background:#E4ECF7;border-radius:14px;padding:20px 24px;color:#1E3A5F;font-size:14px;line-height:1.5">
+            <strong>Built with:</strong> Claude, GitHub Pages and Supabase. All names and ideas in this demo are fictional.
+          </div>
+        </aside>
+      </main>`;
   }
 
   renderStatusCard(id) {
@@ -1107,6 +1159,7 @@ class App extends Component {
         ${s.view === 'assistant' && this.renderAssistant()}
         ${s.view === 'submit' && this.renderSubmit()}
         ${s.view === 'dashboard' && this.renderDashboard()}
+        ${s.view === 'about' && this.renderAbout()}
         <footer>Idea Hub demo · WSJF scoring · all names and ideas are fictional.</footer>
       </div>
       ${this.renderDrawer()}`;
