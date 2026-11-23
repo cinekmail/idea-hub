@@ -10,10 +10,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
-:root{--accent:#0E5C8C;--accent-dark:#0A4166;--ink:#17212B;--muted:#5B6672;--line:#DDE2E7;--line2:#E3E7EB;--bg:#F2F4F6;--soft:#F8FAFB}
+:root{--accent:#E4002B;--accent-dark:#B0001F;--ink:#1A1A1A;--muted:#595959;--line:#E0E0E0;--line2:#E8E8E8;--bg:#F5F5F5;--soft:#FAFAFA}
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif}
-a{color:var(--accent)}a:hover{color:var(--accent-dark)}
+a{color:var(--accent-dark)}a:hover{color:#7A0015}
 button{font:inherit}
 input,select,textarea{font:inherit;color:var(--ink)}
 input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
@@ -26,7 +26,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid v
 .main-col{flex:999 1 620px;min-width:0}
 .side-col{flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:16px}
 h1.title{margin:0;font-size:28px;font-weight:700;letter-spacing:-.015em}
-.fld{width:100%;min-height:44px;padding:10px 12px;border:1px solid #C9CFD6;border-radius:8px;background:#fff;font-size:15px}
+.fld{width:100%;min-height:44px;padding:10px 12px;border:1px solid #C8C8C8;border-radius:8px;background:#fff;font-size:15px}
 .fld.bad{border-color:#B3261E;background:#FFF8F7}
 textarea.fld{resize:vertical;line-height:1.5}
 .lbl{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
@@ -41,9 +41,9 @@ textarea.fld{resize:vertical;line-height:1.5}
 .top-in{max-width:1360px;margin:0 auto;padding:14px 24px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px}
 .brand{display:flex;align-items:center;gap:14px}
 .logo{width:40px;height:40px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center}
-.tabs{display:flex;flex-wrap:wrap;gap:6px;background:#0F171F;padding:4px;border-radius:10px}
-.tab{min-height:44px;padding:0 16px;border:0;border-radius:8px;background:transparent;color:#C9D6E2;font-size:15px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
-.tab:hover{color:#fff;background:#22303D}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;background:#000000;padding:4px;border-radius:10px}
+.tab{min-height:44px;padding:0 16px;border:0;border-radius:8px;background:transparent;color:#D9D9D9;font-size:15px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.tab:hover{color:#fff;background:#333333}
 .tab.on{background:#fff;color:var(--ink)}
 .demo-band{background:#FFF4DE;color:#5C3B00;font-size:13px}
 .demo-band .in{max-width:1360px;margin:0 auto;padding:8px 24px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
@@ -55,20 +55,20 @@ textarea.fld{resize:vertical;line-height:1.5}
 .btn.primary{background:var(--accent);color:#fff}
 .btn.primary:hover{background:var(--accent-dark);color:#fff}
 a.btn.primary,a.btn.primary:visited{color:#fff}
-.btn.ghost{background:#fff;color:var(--ink);border-color:#C9CFD6}
-.btn.ghost:hover{border-color:#8A96A3}
+.btn.ghost{background:#fff;color:var(--ink);border-color:#C8C8C8}
+.btn.ghost:hover{border-color:#8C8C8C}
 .btn.sm{min-height:38px;font-size:14px;padding:0 14px}
-.chip{min-height:40px;padding:0 14px;border:1px solid #C9CFD6;border-radius:999px;background:#fff;color:#2E3A46;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
-.chip:hover{border-color:#8A96A3}
+.chip{min-height:40px;padding:0 14px;border:1px solid #C8C8C8;border-radius:999px;background:#fff;color:#333333;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.chip:hover{border-color:#8C8C8C}
 .chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .chip .n{font-family:'IBM Plex Mono',monospace;font-size:12px;opacity:.8}
-.chip.qr{border-color:#9DB7CC;color:var(--accent-dark);background:#F3F8FC}
-.chip.qr:hover{border-color:var(--accent);background:#E6F0F8}
+.chip.qr{border-color:#F2A7B4;color:var(--accent-dark);background:#FFF4F5}
+.chip.qr:hover{border-color:var(--accent);background:#FDE6EA}
 .pill{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border-radius:999px;font-size:13px;font-weight:500;white-space:nowrap}
 .pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
-.s-new{background:#E4ECF7;color:#1E3A5F}.s-assessment{background:#FFEFD6;color:#7A4600}.s-progress{background:#D9EFEC;color:#0B524D}.s-closed{background:#E9EBEE;color:#3F4650}
-.d-pending{background:#E9EBEE;color:#3F4650}.d-approved{background:#DDF0E2;color:#1C5A2C}.d-hold{background:#FFEFD6;color:#7A4600}.d-rejected{background:#FAE1DD;color:#8E2A1E}
-.p-critical{background:#8E2A1E;color:#fff}.p-high{background:#FFE2BF;color:#6E3B00}.p-medium{background:#E4ECF7;color:#1E3A5F}.p-low{background:#E9EBEE;color:#3F4650}.p-none{background:transparent;color:var(--muted);border:1px dashed #B5BDC6}
+.s-new{background:#E4ECF7;color:#1E3A5F}.s-assessment{background:#FFEFD6;color:#7A4600}.s-progress{background:#D9EFEC;color:#0B524D}.s-closed{background:#EBEBEB;color:#424242}
+.d-pending{background:#EBEBEB;color:#424242}.d-approved{background:#DDF0E2;color:#1C5A2C}.d-hold{background:#FFEFD6;color:#7A4600}.d-rejected{background:#FAE1DD;color:#8E2A1E}
+.p-critical{background:#8E2A1E;color:#fff}.p-high{background:#FFE2BF;color:#6E3B00}.p-medium{background:#E4ECF7;color:#1E3A5F}.p-low{background:#EBEBEB;color:#424242}.p-none{background:transparent;color:var(--muted);border:1px dashed #BDBDBD}
 .sc-hi{background:#1C7A4A}.sc-mid{background:#C47F14}.sc-lo{background:#B3261E}
 .num{width:28px;height:28px;padding:0;justify-content:center;flex:none;font-family:'IBM Plex Mono',monospace}
 
@@ -82,15 +82,15 @@ a.btn.primary,a.btn.primary:visited{color:#fff}
 .skip{position:absolute;left:12px;top:-80px;z-index:20;background:#fff;color:var(--ink);padding:10px 16px;border-radius:8px;font-weight:600;box-shadow:0 2px 12px rgba(0,0,0,.2)}
 .skip:focus{top:12px}
 main:focus{outline:none}
-.fld::placeholder{color:#5B6672;opacity:1}
-.vote{min-height:44px;min-width:64px;padding:0 12px;border:1px solid #C9CFD6;border-radius:999px;background:#fff;color:#2E3A46;font-size:14px;font-weight:600;font-family:'IBM Plex Mono',monospace;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.fld::placeholder{color:#595959;opacity:1}
+.vote{min-height:44px;min-width:64px;padding:0 12px;border:1px solid #C8C8C8;border-radius:999px;background:#fff;color:#333333;font-size:14px;font-weight:600;font-family:'IBM Plex Mono',monospace;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
 .vote:hover{border-color:var(--accent);color:var(--accent)}
 .vote.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .vote.on:hover{background:var(--accent-dark);color:#fff}
 .vote[disabled]{opacity:.65;cursor:progress}
 .vote .word{font-family:'IBM Plex Sans',system-ui,sans-serif;font-weight:500}
 .thbtn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 6px;margin-left:-6px;border-radius:6px;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit}
-.thbtn:hover{background:#E9EDF1;color:var(--ink)}
+.thbtn:hover{background:#EDEDED;color:var(--ink)}
 .thbtn.on{color:var(--accent)}
 .thbtn:focus-visible{outline:2px solid var(--accent)}
 .tr.head{padding:12px 20px;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--soft)}
@@ -105,9 +105,9 @@ main:focus{outline:none}
 .bar span{display:block;height:100%}
 
 /* drawer */
-.backdrop{position:fixed;inset:0;background:rgba(15,23,31,.45);border:0;padding:0;cursor:pointer}
-.drawer{position:fixed;top:0;right:0;bottom:0;width:100%;max-width:560px;background:#fff;overflow-y:auto;box-shadow:-12px 0 40px rgba(15,23,31,.18);display:flex;flex-direction:column;z-index:10}
-.iconbtn{flex:none;width:44px;height:44px;border-radius:8px;border:1px solid #C9CFD6;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);border:0;padding:0;cursor:pointer}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:100%;max-width:560px;background:#fff;overflow-y:auto;box-shadow:-12px 0 40px rgba(0,0,0,.18);display:flex;flex-direction:column;z-index:10}
+.iconbtn{flex:none;width:44px;height:44px;border-radius:8px;border:1px solid #C8C8C8;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 @media (max-width:520px){.g3,.g2{grid-template-columns:1fr}}
@@ -120,11 +120,11 @@ main:focus{outline:none}
 .bub-bot{background:#fff;border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:12px 14px;font-size:15px;line-height:1.55;white-space:pre-line;overflow-wrap:anywhere}
 .bub-user{background:var(--accent);color:#fff;border-radius:14px 4px 14px 14px;padding:10px 14px;font-size:15px;line-height:1.5;max-width:75%;white-space:pre-wrap;overflow-wrap:anywhere}
 .status-card{margin-top:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;max-width:480px}
-.tdot{width:7px;height:7px;border-radius:50%;background:#8A96A3;animation:tblink 1.2s infinite ease-in-out}
+.tdot{width:7px;height:7px;border-radius:50%;background:#8C8C8C;animation:tblink 1.2s infinite ease-in-out}
 .tdot:nth-child(3){animation-delay:.2s}.tdot:nth-child(4){animation-delay:.4s}
 @keyframes tblink{0%,80%,100%{opacity:.25}40%{opacity:1}}
 .ex{all:unset;box-sizing:border-box;display:block;width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:14px;line-height:1.4;cursor:pointer;background:#fff}
-.ex:hover{border-color:#8A96A3;background:var(--soft)}
+.ex:hover{border-color:#8C8C8C;background:var(--soft)}
 .ex:focus-visible{outline:2px solid var(--accent)}
 footer{max-width:1360px;margin:0 auto;padding:0 24px 32px;font-size:13px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.tdot{animation:none}}
@@ -147,7 +147,7 @@ const PRIO = { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' 
 const URG = { low: 'Low', medium: 'Medium', high: 'High' };
 const ASSIGNEES = ['Anna Nowak', 'Piotr Wiśniewski', 'Katarzyna Zielińska', 'Tomasz Lewandowski', 'Marta Kamińska'];
 const FIB = [1, 2, 3, 5, 8, 13, 20];
-const AV = ['#0E5C8C', '#0B6B5F', '#5B3FA0', '#8A4B12', '#3F4650', '#7A2E5C'];
+const AV = ['#1E3A5F', '#0B6B5F', '#5B3FA0', '#8A4B12', '#424242', '#7A2E5C'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const FIRST_NUM = 1049;
 
@@ -164,7 +164,7 @@ const MAX_IDEAS = 100;
 
 const fmt = (d) => { const p = d.split('-'); return Number(p[2]) + ' ' + MONTHS[Number(p[1]) - 1] + ' ' + p[0]; };
 const initials = (n) => n ? n.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase() : '—';
-const avBg = (n) => { if (!n) return '#6B7682'; let h = 0; for (let k = 0; k < n.length; k++) h = (h + n.charCodeAt(k)) % AV.length; return AV[h]; };
+const avBg = (n) => { if (!n) return '#6B6B6B'; let h = 0; for (let k = 0; k < n.length; k++) h = (h + n.charCodeAt(k)) % AV.length; return AV[h]; };
 const cap = (x) => x.charAt(0).toUpperCase() + x.slice(1);
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -273,7 +273,7 @@ const Icon = {
   plus: html`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
   close: html`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
   send: html`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l16-8-6 16-3-7z"/></svg>`,
-  search: html`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B6672" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="position:absolute;left:12px;top:14px"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>`,
+  search: html`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#595959" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="position:absolute;left:12px;top:14px"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/></svg>`,
   check: html`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9.5"/></svg>`,
   server: html`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01"/></svg>`,
   bulb: html`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1.1 1.3 1.1 2.2h5c0-.9.5-1.7 1.1-2.2A6 6 0 0 0 12 3z"/></svg>`
@@ -640,7 +640,7 @@ class App extends Component {
             <div class="logo">${Icon.server}</div>
             <div>
               <div style="font-size:18px;font-weight:700;letter-spacing:-.01em">Hosting Services Idea Hub</div>
-              <div style="font-size:13px;color:#A9B6C3">Submit, assess and track improvement ideas</div>
+              <div style="font-size:13px;color:#BDBDBD">Submit, assess and track improvement ideas</div>
             </div>
           </div>
           <nav class="tabs" aria-label="Sections">
@@ -725,7 +725,7 @@ class App extends Component {
     return html`
       <div class="status-card">
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-          <span class="mono" style="font-size:13px;color:#3F4650">${i.id}</span>
+          <span class="mono" style="font-size:13px;color:#424242">${i.id}</span>
           <span class=${'pill s-' + i.stage}><span class="dot"></span>${STAGE[i.stage]}</span>
           <span class=${'pill d-' + i.decision}>${DEC[i.decision]}</span>
         </div>
@@ -810,7 +810,7 @@ class App extends Component {
           </div>
           <div class="card" style="padding:22px">
             <h2 style="margin:0 0 12px;font-size:17px;font-weight:700">How it works</h2>
-            <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.5;color:#2E3A46">
+            <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.5;color:#333333">
               <li>Raising an idea asks the same questions as the form, one at a time. Type “cancel” at any point.</li>
               <li>Ideas raised here appear on the dashboard straight away as New / Pending.</li>
               <li>Check status by idea ID (e.g. HS-1045) or by the email you submitted with.</li>
@@ -978,7 +978,7 @@ class App extends Component {
         <div class="kpis">
           ${kpis.map((k) => html`
             <div class="card kpi" key=${k.label}>
-              <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:#3F4650"><span class=${'pill ' + k.cls} style="width:10px;height:10px;padding:0"></span>${k.label}</div>
+              <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:#424242"><span class=${'pill ' + k.cls} style="width:10px;height:10px;padding:0"></span>${k.label}</div>
               <div class="v">${k.value}</div>
               <div class="muted" style="font-size:13px">${k.sub}</div>
             </div>`)}
@@ -1017,7 +1017,7 @@ class App extends Component {
                 const ratio = sc === null ? 0 : sc / maxW;
                 return html`
                 <div class="tr body" role="row" key=${i.id}>
-                  <div role="cell" class="mono" style="font-size:13px;color:#3F4650">${i.id}</div>
+                  <div role="cell" class="mono" style="font-size:13px;color:#424242">${i.id}</div>
                   <div role="cell">${this.renderVote(i)}</div>
                   <div role="cell" style="min-width:0">
                     <button type="button" class="rowbtn" id=${'open-' + i.id} onClick=${() => this.openSel(i.id)}>${i.title}</button>
@@ -1073,7 +1073,7 @@ class App extends Component {
           <div style="padding:22px 24px;border-bottom:1px solid var(--line2);display:flex;gap:16px;align-items:flex-start;justify-content:space-between">
             <div style="min-width:0">
               <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">
-                <span class="mono" style="font-size:13px;color:#3F4650">${i.id}</span>
+                <span class="mono" style="font-size:13px;color:#424242">${i.id}</span>
                 <span class=${'pill s-' + i.stage}><span class="dot"></span>${STAGE[i.stage]}</span>
                 <span class=${'pill d-' + i.decision}>${DEC[i.decision]}</span>
               </div>
