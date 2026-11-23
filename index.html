@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Idea Hub · Hosting Services</title>
+<title>Platform Idea Hub</title>
 <meta name="description" content="Demo app for raising, scoring (WSJF) and tracking improvement ideas, with a guided idea assistant.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230E5C8C'/%3E%3Cpath d='M16 7a7 7 0 0 0-4.2 12.6c.7.6 1.2 1.5 1.2 2.4h6c0-.9.5-1.8 1.2-2.4A7 7 0 0 0 16 7zM13 25h6' fill='none' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -262,7 +262,7 @@ const friendlyError = (e) => {
   return 'The database refused that change (' + m + ').';
 };
 
-const greeting = () => ({ id: 1, from: 'bot', text: 'Hi! I\'m the Hosting Services idea assistant.\n\nI can help you raise a new idea, or check the status of an idea you\'ve already submitted. What would you like to do?', cardId: null });
+const greeting = () => ({ id: 1, from: 'bot', text: 'Hi! I\'m the Platform Idea Hub assistant.\n\nI can help you raise a new idea, or check the status of an idea you\'ve already submitted. What would you like to do?', cardId: null });
 
 /* Thumbs-up icon: a function so each button gets its own copy */
 const thumbIcon = () => html`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>`;
@@ -328,7 +328,7 @@ class App extends Component {
 
   updateTitle() {
     const names = { assistant: 'Idea assistant', submit: 'Submit an idea', dashboard: 'Idea dashboard', about: 'About the author' };
-    document.title = (names[this.state.view] || 'Idea Hub') + ' · Idea Hub';
+    document.title = (names[this.state.view] || 'Idea Hub') + ' · Platform Idea Hub';
   }
   componentWillUnmount() { document.removeEventListener('keydown', this.onKey); clearTimeout(this.chatTimer); }
 
@@ -579,7 +579,7 @@ class App extends Component {
             const id = await this.addIdea(d);
             upd.lastEmail = d.email.toLowerCase();
             flow = null;
-            say('Done! Your idea is raised as ' + id + '. It starts as New with decision Pending — the Hosting Services team will score it with WSJF and assign an owner.\n\nAsk me about ' + id + ' any time to see where it stands.', id);
+            say('Done! Your idea is raised as ' + id + '. It starts as New with decision Pending — the Platform team will score it with WSJF and assign an owner.\n\nAsk me about ' + id + ' any time to see where it stands.', id);
           } catch (err) {
             say('Sorry, I couldn\'t save your idea. ' + err.message + '\n\nYou can try “Submit idea” again, or “Cancel”.');
           }
@@ -615,7 +615,7 @@ class App extends Component {
     } else if (/^(hi|hello|hey|good (morning|afternoon))\b/.test(low)) {
       say('Hi! I can help you raise a new idea or check the status of one you\'ve submitted. Which would you like?');
     } else {
-      say('Sorry, I didn\'t catch that. I can help with two things: raising a new idea for Hosting Services, or checking the status of an idea you\'ve already submitted.');
+      say('Sorry, I didn\'t catch that. I can help with two things: raising a new idea for the platform, or checking the status of an idea you\'ve already submitted.');
     }
 
     this.setState(Object.assign({ chat: this.state.chat.concat(out), flow, typing: false, chatChips: chips }, upd));
@@ -639,7 +639,7 @@ class App extends Component {
           <div class="brand">
             <div class="logo">${Icon.server}</div>
             <div>
-              <div style="font-size:18px;font-weight:700;letter-spacing:-.01em">Hosting Services Idea Hub</div>
+              <div style="font-size:18px;font-weight:700;letter-spacing:-.01em">Platform Idea Hub</div>
               <div style="font-size:13px;color:#BDBDBD">Submit, assess and track improvement ideas</div>
             </div>
           </div>
@@ -777,7 +777,7 @@ class App extends Component {
           <div class="log" ref=${this.logRef} role="log" aria-live="polite" aria-label="Conversation">
             ${s.chat.map((m) => m.from === 'bot' ? html`
               <div key=${m.id} style="display:flex;gap:10px;align-items:flex-start;max-width:640px">
-                <div class="bot-av" aria-hidden="true">HS</div>
+                <div class="bot-av" aria-hidden="true">IH</div>
                 <div style="min-width:0;flex:1">
                   <div class="bub-bot">${m.text}</div>
                   ${m.cardId && this.renderStatusCard(m.cardId)}
@@ -786,7 +786,7 @@ class App extends Component {
               <div key=${m.id} style="display:flex;justify-content:flex-end"><div class="bub-user">${m.text}</div></div>`)}
             ${s.typing && html`
               <div style="display:flex;gap:10px;align-items:center">
-                <div class="bot-av" aria-hidden="true">HS</div>
+                <div class="bot-av" aria-hidden="true">IH</div>
                 <div class="bub-bot" style="display:flex;gap:5px;align-items:center;padding:14px 16px"><span class="sr">Assistant is typing</span><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span></div>
               </div>`}
           </div>
@@ -835,7 +835,7 @@ class App extends Component {
       <main class="wrap row" id="main" tabindex="-1">
         <section class="card main-col" style="padding:32px">
           <h1 class="title" style="margin-bottom:6px">Submit a new idea</h1>
-          <p class="muted" style="margin:0 0 28px;font-size:15px;line-height:1.5">Propose an improvement to Hosting Services. Fields marked <span class="req">*</span> are required. The Hosting Services team reviews new ideas and sets priority, owner and decision.</p>
+          <p class="muted" style="margin:0 0 28px;font-size:15px;line-height:1.5">Propose an improvement to the platform. Fields marked <span class="req">*</span> are required. The Platform team reviews new ideas and sets priority, owner and decision.</p>
 
           ${s.errSummary && Object.values(err).some(Boolean) && html`
             <div role="alert" style="padding:12px 16px;margin-bottom:24px;border-radius:10px;background:#FAE1DD;color:#8E2A1E;font-size:15px;font-weight:500">${s.errSummary}</div>`}

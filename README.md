@@ -1,6 +1,6 @@
-# Idea Hub — Hosting Services
+# Platform Idea Hub
 
-A demo web app for raising, scoring and tracking improvement ideas for an IT Hosting Services team. Ideas can be raised through a guided chat assistant or a form, then prioritised with **WSJF (Weighted Shortest Job First)** and tracked to a decision.
+A demo web app for raising, scoring and tracking improvement ideas for an IT platform team. Ideas can be raised through a guided chat assistant or a form, then prioritised with **WSJF (Weighted Shortest Job First)** and tracked to a decision.
 
 **Live demo:** https://cinekmail.github.io/idea-hub/
 
